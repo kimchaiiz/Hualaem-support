@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>เบิกค่าใช้จ่าย | Expense reimbursement</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- LINE Front-end Framework (LIFF) SDK -->
+<script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+:root{
+  --bg:#E6ECF2; --slip:#FFFFFF; --field:#F3F6F9; --ink:#0E1726; --muted:#586477; --line:#D3DBE5;
+  --accent:#2447D6; --accent-ink:#FFFFFF; --err:#B42318; --err-bg:#FDECEA; --ok:#0F7A55;
+  --bar:#0E1726; --bar-ink:#FFFFFF; --bar-muted:#AEB9CB; --warn:#8A5A00; --warn-bg:#FFF3D1;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0C121B; --slip:#161F2C; --field:#0F1722; --ink:#E8EDF4; --muted:#9AA7B8; --line:#2A3647;
+    --accent:#8AA2FF; --accent-ink:#0C121B; --err:#FF9189; --err-bg:#3A1C1C; --ok:#5CD0A3;
+    --bar:#223046; --bar-ink:#FFFFFF; --bar-muted:#9FB0C8; --warn:#F2C26B; --warn-bg:#33290F;
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:"IBM Plex Sans Thai","Sarabun","Noto Sans Thai",system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:16px;line-height:1.5;
+  padding:env(safe-area-inset-top,0) 0 calc(120px + env(safe-area-inset-bottom,0));
+}
+.wrap{max-width:560px;margin:0 auto;padding:0 16px}
+[hidden]{display:none!important}
+
+/* header */
+.top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 0 6px}
+h1{font-size:24px;line-height:1.25;font-weight:600;margin:0}
+.sub{margin:4px 0 0;color:var(--muted);font-size:15px}
+.lang{flex:none;min-width:48px;height:36px;border:1px solid var(--line);background:var(--slip);color:var(--ink);
+  border-radius:18px;font:inherit;font-size:14px;font-weight:500;padding:0 12px;cursor:pointer}
+.banner{margin:12px 0 0;padding:10px 12px;border-radius:10px;background:var(--warn-bg);color:var(--warn);font-size:14px}
+
+/* generic sections */
+.block{margin-top:20px}
+.block>h2{font-size:15px;font-weight:600;margin:0 0 8px;color:var(--ink)}
+.panel{background:var(--slip);border-radius:14px;padding:16px;border:1px solid var(--line)}
+.field{display:block;margin:0 0 14px}
+.field:last-child{margin-bottom:0}
+.lbl{display:block;font-size:14px;font-weight:500;color:var(--muted);margin-bottom:6px}
+.hint{margin:6px 0 0;font-size:13px;color:var(--muted)}
+input[type=text],input[type=date],input[type=tel],select,textarea{
+  width:100%;min-height:48px;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;
+  background:var(--field);color:var(--ink);font:inherit;font-size:16px;appearance:none;-webkit-appearance:none}
+select{background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+  background-position:calc(100% - 20px) 50%,calc(100% - 14px) 50%;background-size:6px 6px;background-repeat:no-repeat;padding-right:36px}
+textarea{min-height:84px;resize:vertical}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+[aria-invalid=true]{border-color:var(--err)!important}
+.err{margin:6px 0 0;font-size:13px;color:var(--err);font-weight:500}
+.budget{margin:8px 0 0;font-size:14px;color:var(--muted)}
+.remember{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted);min-height:44px}
+.remember input{width:22px;height:22px;accent-color:var(--accent)}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 18px;border-radius:12px;
+  border:1.5px solid var(--accent);background:var(--accent);color:var(--accent-ink);font:inherit;font-weight:600;font-size:16px;cursor:pointer}
+.btn.sec{background:transparent;color:var(--accent)}
+.btn.block-btn{width:100%}
+.btn[disabled]{opacity:.55;cursor:default}
+.link{background:none;border:0;color:var(--accent);font:inherit;font-size:14px;font-weight:500;min-height:44px;padding:0 4px;cursor:pointer}
+.link.danger{color:var(--err)}
+
+/* receipt slip */
+.slips{display:flex;flex-direction:column;gap:22px}
+.slip{position:relative;background:var(--slip);padding:14px 16px 18px;border-radius:14px 14px 0 0;
+  box-shadow:0 1px 0 var(--line)}
+.slip::after{content:"";position:absolute;left:0;right:0;bottom:-9px;height:10px;
+  background:
+    linear-gradient(135deg,var(--slip) 5px,transparent 0) 0 0/14px 10px repeat-x,
+    linear-gradient(225deg,var(--slip) 5px,transparent 0) 0 0/14px 10px repeat-x;}
+.slip.enter{animation:slipin .22s ease-out}
+@keyframes slipin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.slip.enter{animation:none}}
+.slip-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.slip-h h3{margin:0;font-size:15px;font-weight:600}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:360px){.row2{grid-template-columns:1fr}}
+.amount input{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+
+/* receipt drop zone */
+.drop{border:1.5px dashed var(--line);border-radius:12px;background:var(--field);padding:12px}
+.drop.has{border-style:solid;padding:10px}
+.drop-empty{display:flex;flex-wrap:wrap;gap:10px}
+.drop-empty .btn{flex:1 1 130px}
+.drop-empty .hint{flex:1 0 100%;margin:0}
+.drop-has{display:flex;align-items:center;gap:12px}
+.thumb{width:64px;height:64px;border-radius:8px;object-fit:cover;background:var(--line);flex:none}
+.pdfbox{width:64px;height:64px;border-radius:8px;flex:none;background:var(--line);display:grid;place-items:center;font-weight:600;font-size:14px;color:var(--muted)}
+.fileinfo{flex:1;min-width:0}
+.fname{display:block;font-size:14px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fsize{display:block;font-size:13px;color:var(--muted)}
+.drop-actions{display:flex;flex-direction:column;align-items:flex-end}
+.busy{font-size:14px;color:var(--muted)}
+
+.add{margin-top:22px}
+.limit{margin:8px 0 0;font-size:13px;color:var(--muted);text-align:center}
+
+/* sticky tape */
+.tape{position:fixed;left:0;right:0;bottom:0;background:var(--bar);color:var(--bar-ink);
+  padding:12px 16px calc(12px + env(safe-area-inset-bottom,0));box-shadow:0 -6px 18px rgba(0,0,0,.14);z-index:10}
+.tape-in{max-width:560px;margin:0 auto;display:flex;align-items:center;gap:14px}
+.tape-sum{flex:1;min-width:0}
+.tape-l{font-size:13px;color:var(--bar-muted)}
+.tape-v{font-size:24px;font-weight:600;line-height:1.15;font-variant-numeric:tabular-nums}
+.tape-warn{display:block;font-size:12.5px;color:#FFD27A;margin-top:2px}
+.tape .btn{background:#fff;color:#0E1726;border-color:#fff;min-width:150px}
+@media (prefers-color-scheme: dark){.tape .btn{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}}
+
+/* toast + success */
+.toast{position:fixed;left:16px;right:16px;bottom:calc(96px + env(safe-area-inset-bottom,0));max-width:528px;margin:0 auto;
+  background:var(--err-bg);color:var(--err);border:1px solid var(--err);padding:12px 14px;border-radius:12px;font-weight:500;font-size:14.5px;z-index:11}
+.done{padding:32px 0}
+.done h2{font-size:24px;margin:0 0 6px}
+.done .ref{font-size:28px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:.02em;margin:14px 0 2px}
+.stack{display:flex;flex-direction:column;gap:10px;margin-top:22px}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:15px}
+.kv:last-child{border-bottom:0}
+.kv span:last-child{font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+</style>
+</head>
+<body>
+<main class="wrap" id="app">
+
+  <!-- FORM VIEW -->
+  <div id="formView">
+    <header class="top">
+      <div>
+        <h1 data-i18n="title"></h1>
+        <p class="sub" data-i18n="subtitle"></p>
+      </div>
+      <button type="button" class="lang" id="langBtn" aria-label="Language"></button>
+    </header>
+    <div class="banner" id="demoBanner" hidden data-i18n="demo"></div>
+    <div class="banner" id="liffBanner" hidden></div>
+
+    <section class="block">
+      <h2 data-i18n="secEvent"></h2>
+      <div class="panel">
+        <label class="field" data-f="event">
+          <span class="lbl" data-i18n="event"></span>
+          <select id="event" required><option value="" data-i18n="eventPh"></option></select>
+          <p class="budget" id="budgetLine" hidden></p>
+          <p class="err" role="alert" hidden></p>
+        </label>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2 data-i18n="secPayee"></h2>
+      <div class="panel">
+        <label class="field" data-f="name">
+          <span class="lbl" data-i18n="name"></span>
+          <input type="text" id="name" autocomplete="name" maxlength="80" required>
+          <p class="err" role="alert" hidden></p>
+        </label>
+        <label class="field" data-f="pp">
+          <span class="lbl" data-i18n="pp"></span>
+          <input type="tel" id="pp" inputmode="numeric" autocomplete="off" maxlength="20" placeholder="0812345678" required>
+          <p class="hint" data-i18n="ppHint"></p>
+          <p class="err" role="alert" hidden></p>
+        </label>
+        <label class="remember"><input type="checkbox" id="remember" checked><span data-i18n="remember"></span></label>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2 data-i18n="secExpenses"></h2>
+      <div class="slips" id="slips"></div>
+      <button type="button" class="btn sec block-btn add" id="addBtn" data-i18n="add"></button>
+      <p class="limit" id="limitLine" hidden></p>
+    </section>
+
+    <section class="block">
+      <h2 data-i18n="secNote"></h2>
+      <div class="panel">
+        <label class="field">
+          <span class="lbl" data-i18n="note"></span>
+          <textarea id="note" maxlength="500"></textarea>
+        </label>
+      </div>
+    </section>
+  </div>
+
+  <!-- SUCCESS VIEW -->
+  <div id="doneView" class="done" hidden>
+    <h2 data-i18n="doneTitle"></h2>
+    <p class="sub" data-i18n="doneSub"></p>
+    <p class="sub" style="margin-top:14px" data-i18n="ref"></p>
+    <p class="ref" id="refNo"></p>
+    <div class="panel" style="margin-top:18px" id="doneSummary"></div>
+    <div class="stack">
+      <button type="button" class="btn block-btn" id="closeBtn" data-i18n="close"></button>
+      <button type="button" class="btn sec block-btn" id="againBtn" data-i18n="again"></button>
+    </div>
+  </div>
+</main>
+
+<div class="tape" id="tape">
+  <div class="tape-in">
+    <div class="tape-sum">
+      <div class="tape-l" id="tapeLabel"></div>
+      <div class="tape-v" id="tapeTotal">฿0.00</div>
+      <span class="tape-warn" id="tapeWarn" hidden></span>
+    </div>
+    <button type="button" class="btn" id="submitBtn" data-i18n="submit"></button>
+  </div>
+</div>
+<div class="toast" id="toast" role="alert" hidden></div>
+
+<script>
+/* =====================================================================
+   CONFIG - edit this block only
+   ===================================================================== */
+const CONFIG = {
+  LIFF_ID: "",              // 1) your LIFF ID, e.g. "1234567890-AbCdEfGh". Empty = demo mode
+  API_URL: "",              // 2) your Google web app URL (ends with /exec). Empty = demo mode, nothing is sent
+  EVENTS_URL: "",           // 3) same web app URL + ?action=events  (the drop-down reads the Events tab)
+  API_MODE: "apps-script",  // "apps-script" = Google Sheet + Drive.  "multipart" = your own server
+  MAX_ITEMS: 10,            // max expense records per claim
+  MAX_FILE_MB: 5,           // max size per receipt file after compression
+  MAX_TOTAL_MB: 15,         // max size of all receipts in one claim
+  IMAGE_MAX_PX: 1600,       // longest side for compressed receipt photos
+  IMAGE_QUALITY: 0.82,
+  SEND_CHAT_SUMMARY: true,  // send a summary message to the LINE chat after submit (needs chat_message.write scope)
+  DEFAULT_LANG: "th",
+  CATEGORIES: ["venue","food","supplies","print","transport","other"],
+  // Fallback / sample events used when EVENTS_URL is empty or fails. budget in THB (optional).
+  EVENTS: [
+    {id:"EV-2026-11", name:"Community Meetup – November", date:"2026-11-21", budget:5000},
+    {id:"EV-2026-12", name:"Year-end Gathering", date:"2026-12-19", budget:12000}
+  ]
+};
+
+/* =====================================================================
+   Translations
+   ===================================================================== */
+const T = {
+ th:{
+  title:"เบิกค่าใช้จ่าย", subtitle:"ส่งใบเสร็จของกิจกรรมเพื่อขออนุมัติคืนเงิน",
+  demo:"โหมดทดลอง: ยังไม่ได้ส่งข้อมูลจริง",
+  secEvent:"กิจกรรม", event:"กิจกรรมที่เบิก", eventPh:"เลือกกิจกรรม", budget:"งบที่อนุมัติ {x}",
+  secPayee:"รับเงินคืนที่", name:"ชื่อ-นามสกุลบัญชีพร้อมเพย์", pp:"หมายเลขพร้อมเพย์",
+  ppHint:"เบอร์มือถือ 10 หลัก หรือเลขบัตรประชาชน 13 หลัก", remember:"จำชื่อและพร้อมเพย์ในเครื่องนี้",
+  secExpenses:"รายการค่าใช้จ่าย", expenseN:"รายการที่ {n}", remove:"ลบรายการ",
+  receipt:"ใบเสร็จ", takePhoto:"ถ่ายรูป", chooseFile:"เลือกไฟล์",
+  receiptHint:"ให้เห็นยอดรวมและวันที่ชัดเจน (รูปหรือ PDF ไม่เกิน {mb} MB)", replace:"เปลี่ยน", processing:"กำลังเตรียมไฟล์…",
+  date:"วันที่ในใบเสร็จ", amount:"จำนวนเงิน (บาท)", category:"หมวดหมู่", categoryPh:"เลือกหมวดหมู่",
+  desc:"ใช้ไปกับอะไร", descPh:"เช่น ค่าเช่าห้อง 3 ชั่วโมง",
+  cat_venue:"สถานที่", cat_food:"อาหารและเครื่องดื่ม", cat_supplies:"อุปกรณ์และวัสดุ", cat_print:"สิ่งพิมพ์และป้าย", cat_transport:"เดินทางและขนส่ง", cat_other:"อื่น ๆ",
+  add:"เพิ่มรายการ", limit:"เพิ่มได้สูงสุด {n} รายการต่อคำขอ",
+  secNote:"ข้อความถึงผู้อนุมัติ", note:"หมายเหตุ (ไม่บังคับ)",
+  total:"ยอดรวม", itemsOne:"{n} รายการ", itemsMany:"{n} รายการ",
+  over:"เกินงบ {x} ผู้อนุมัติจะเห็นข้อมูลนี้",
+  submit:"ส่งคำขอเบิก", submitting:"กำลังส่ง…",
+  req:"กรอกข้อมูลนี้", eventReq:"เลือกกิจกรรม", catReq:"เลือกหมวดหมู่",
+  ppBad:"ตรวจสอบหมายเลข: เบอร์มือถือ 10 หลัก หรือเลขบัตรประชาชน 13 หลักที่ถูกต้อง",
+  amountBad:"ใส่จำนวนเงินมากกว่า 0", amountMax:"จำนวนเงินสูงเกินไป ตรวจสอบอีกครั้ง",
+  dateFuture:"วันที่ต้องไม่เป็นวันในอนาคต", dateReq:"เลือกวันที่",
+  receiptReq:"แนบใบเสร็จ", fileBig:"ไฟล์ใหญ่เกิน {mb} MB", fileType:"รองรับเฉพาะรูปภาพและ PDF",
+  totalBig:"ไฟล์ใบเสร็จรวมกันใหญ่เกิน {mb} MB แยกเป็นหลายคำขอหรือลดขนาดไฟล์",
+  fixN:"ตรวจสอบ {n} จุดที่ยังไม่ครบ", sendFail:"ส่งไม่สำเร็จ ข้อมูลของคุณยังอยู่ ลองส่งอีกครั้ง",
+  doneTitle:"ส่งคำขอแล้ว", doneSub:"สถานะ: รอการอนุมัติ", ref:"เลขอ้างอิง",
+  close:"ปิด", again:"ส่งคำขออื่น",
+  sumEvent:"กิจกรรม", sumItems:"จำนวนรายการ", sumTotal:"ยอดรวม",
+  liffFail:"เชื่อมต่อ LINE ไม่สำเร็จ ลองเปิดจากแชทอีกครั้ง", eventsFail:"โหลดรายการกิจกรรมไม่สำเร็จ ใช้รายการที่บันทึกไว้แทน",
+  langBtn:"EN", chatMsg:"ส่งคำขอเบิกแล้ว\nเลขอ้างอิง {ref}\nกิจกรรม: {event}\nยอดรวม {total}"
+ },
+ en:{
+  title:"Expense reimbursement", subtitle:"Send receipts for an event to get paid back.",
+  demo:"Demo mode: nothing is sent yet.",
+  secEvent:"Event", event:"Event you spent on", eventPh:"Select an event", budget:"Approved budget {x}",
+  secPayee:"Pay back to", name:"Full name on the PromptPay account", pp:"PromptPay number",
+  ppHint:"10-digit mobile number or 13-digit national ID", remember:"Remember my name and PromptPay on this device",
+  secExpenses:"Expenses", expenseN:"Expense {n}", remove:"Remove",
+  receipt:"Receipt", takePhoto:"Take photo", chooseFile:"Choose file",
+  receiptHint:"Total and date must be readable (photo or PDF, up to {mb} MB)", replace:"Replace", processing:"Preparing file…",
+  date:"Receipt date", amount:"Amount (THB)", category:"Category", categoryPh:"Select a category",
+  desc:"What it was for", descPh:"e.g. Room rental, 3 hours",
+  cat_venue:"Venue", cat_food:"Food & drinks", cat_supplies:"Equipment & supplies", cat_print:"Printing & signage", cat_transport:"Transport", cat_other:"Other",
+  add:"Add expense", limit:"Up to {n} expenses per claim",
+  secNote:"Message to the approver", note:"Note (optional)",
+  total:"Total", itemsOne:"{n} expense", itemsMany:"{n} expenses",
+  over:"Over budget by {x}. The approver will see this.",
+  submit:"Submit claim", submitting:"Submitting…",
+  req:"Required", eventReq:"Select an event", catReq:"Select a category",
+  ppBad:"Enter a valid 10-digit mobile number or 13-digit national ID",
+  amountBad:"Enter an amount above 0", amountMax:"Amount is too high. Check it again.",
+  dateFuture:"Date can't be in the future", dateReq:"Select a date",
+  receiptReq:"Attach a receipt", fileBig:"File is over {mb} MB", fileType:"Only photos and PDFs are supported",
+  totalBig:"Receipts add up to more than {mb} MB. Split into two claims or use smaller files.",
+  fixN:"Fix {n} fields to continue", sendFail:"Couldn't submit. Your entries are still here. Try again.",
+  doneTitle:"Claim submitted", doneSub:"Status: waiting for approval", ref:"Reference",
+  close:"Close", again:"Submit another claim",
+  sumEvent:"Event", sumItems:"Expenses", sumTotal:"Total",
+  liffFail:"Couldn't connect to LINE. Try opening this from the chat again.", eventsFail:"Couldn't load events. Showing the saved list instead.",
+  langBtn:"ไทย", chatMsg:"Claim submitted\nReference {ref}\nEvent: {event}\nTotal {total}"
+ }
+};
+
+/* =====================================================================
+   Helpers
+   ===================================================================== */
+const $  = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+let lang = CONFIG.DEFAULT_LANG;
+const t = (k, vars) => {
+  let s = (T[lang] && T[lang][k]) ?? T.en[k] ?? k;
+  if (vars) for (const [a,b] of Object.entries(vars)) s = s.split("{"+a+"}").join(b);
+  return s;
+};
+const money = n => "฿" + new Intl.NumberFormat(lang === "th" ? "th-TH" : "en-US",
+  {minimumFractionDigits:2, maximumFractionDigits:2}).format(n);
+const todayStr = () => { const d = new Date(); const p = v => String(v).padStart(2,"0");
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate()); };
+const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : "id-"+Date.now()+"-"+Math.random().toString(16).slice(2));
+const store = {
+  get(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){} }
+};
+let uidN = 0;
+
+/* i18n: elements with data-i18n are re-rendered whenever language changes */
+function applyLang(){
+  document.documentElement.lang = lang;
+  $$("[data-i18n]").forEach(el => { el.textContent = t(el.dataset.i18n, el._vars); });
+  $$("[data-i18n-ph]").forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
+  $("#langBtn").textContent = t("langBtn");
+  renumber(); updateEventLine(); updateTotals();
+  $("#limitLine").textContent = t("limit", {n:CONFIG.MAX_ITEMS});
+  if (state.submitting) $("#submitBtn").textContent = t("submitting");
+}
+function setI18n(el, key, vars){ el.dataset.i18n = key; el._vars = vars; el.textContent = t(key, vars); }
+
+/* =====================================================================
+   State
+   ===================================================================== */
+const state = { events:[], items:[], submitting:false, liff:{ok:false,userId:null,name:null,token:null,inClient:false}, demo:false };
+
+/* =====================================================================
+   Validation helpers
+   ===================================================================== */
+function setError(fieldEl, key, vars){
+  const err = $(".err", fieldEl);
+  const input = $("input,select,textarea", fieldEl);
+  if (!err) return;
+  if (key){ setI18n(err, key, vars); err.hidden = false; input && input.setAttribute("aria-invalid","true"); }
+  else { err.hidden = true; err.removeAttribute("data-i18n"); input && input.removeAttribute("aria-invalid"); }
+}
+function normPP(v){
+  let d = String(v||"").replace(/\D/g,"");
+  if (d.startsWith("66") && d.length === 11) d = "0" + d.slice(2);
+  return d;
+}
+function thaiIdOk(d){
+  if (!/^\d{13}$/.test(d)) return false;
+  let s = 0; for (let i=0;i<12;i++) s += (+d[i])*(13-i);
+  return ((11 - (s % 11)) % 10) === +d[12];
+}
+function ppOk(raw){
+  const d = normPP(raw);
+  if (/^0\d{9}$/.test(d)) return true;      // mobile
+  if (d.length === 13) return thaiIdOk(d);    // national / tax ID
+  if (/^\d{15}$/.test(d)) return true;      // e-wallet ID
+  return false;
+}
+const toSatang = v => { const n = parseFloat(String(v).replace(/,/g,"")); return isFinite(n) ? Math.round(n*100) : NaN; };
+const fmtBytes = b => b > 1048576 ? (b/1048576).toFixed(1)+" MB" : Math.max(1,Math.round(b/1024))+" KB";
+
+/* =====================================================================
+   Events
+   ===================================================================== */
+async function loadEvents(){
+  let list = CONFIG.EVENTS;
+  if (CONFIG.EVENTS_URL){
+    try{
+      const headers = (CONFIG.API_MODE !== "apps-script" && state.liff.token) ? {Authorization:"Bearer "+state.liff.token} : {};
+      const r = await fetch(CONFIG.EVENTS_URL, {headers});
+      if (!r.ok) throw new Error(r.status);
+      list = await r.json();
+    }catch(e){ showLiffBanner(t("eventsFail")); }
+  }
+  state.events = list;
+  const sel = $("#event");
+  list.forEach(ev => {
+    const o = document.createElement("option");
+    o.value = ev.id;
+    o.textContent = ev.name;
+    sel.appendChild(o);
+  });
+}
+const currentEvent = () => state.events.find(e => e.id === $("#event").value);
+function updateEventLine(){
+  const ev = currentEvent(), el = $("#budgetLine");
+  if (ev && ev.budget){ el.hidden = false; el.textContent = t("budget", {x:money(ev.budget)}); } else el.hidden = true;
+}
+
+/* =====================================================================
+   Expense slips
+   ===================================================================== */
+function slipHTML(id){
+  const cats = CONFIG.CATEGORIES.map(c => `<option value="${c}" data-i18n="cat_${c}"></option>`).join("");
+  return `
+  <div class="slip-h"><h3 data-role="title"></h3><button type="button" class="link danger" data-act="remove" data-i18n="remove"></button></div>
+
+  <div class="field" data-f="receipt" role="group" aria-labelledby="rl${id}">
+    <span class="lbl" id="rl${id}" data-i18n="receipt"></span>
+    <div class="drop" data-role="drop">
+      <div class="drop-empty" data-role="empty">
+        <button type="button" class="btn sec" data-act="cam" data-i18n="takePhoto"></button>
+        <button type="button" class="btn sec" data-act="pick" data-i18n="chooseFile"></button>
+        <p class="hint" data-role="rhint"></p>
+      </div>
+      <div class="drop-has" data-role="has" hidden>
+        <div data-role="thumbWrap"></div>
+        <div class="fileinfo"><span class="fname" data-role="fname"></span><span class="fsize" data-role="fsize"></span></div>
+        <div class="drop-actions">
+          <button type="button" class="link" data-act="pick" data-i18n="replace"></button>
+        </div>
+      </div>
+      <div class="busy" data-role="busy" hidden data-i18n="processing"></div>
+    </div>
+    <input type="file" accept="image/*,application/pdf" hidden data-role="filePick">
+    <input type="file" accept="image/*" capture="environment" hidden data-role="fileCam">
+    <p class="err" role="alert" hidden></p>
+  </div>
+
+  <div class="row2">
+    <label class="field" data-f="date">
+      <span class="lbl" data-i18n="date"></span>
+      <input type="date" data-role="date" required>
+      <p class="err" role="alert" hidden></p>
+    </label>
+    <label class="field amount" data-f="amount">
+      <span class="lbl" data-i18n="amount"></span>
+      <input type="text" inputmode="decimal" autocomplete="off" placeholder="0.00" data-role="amount" required>
+      <p class="err" role="alert" hidden></p>
+    </label>
+  </div>
+
+  <label class="field" data-f="category">
+    <span class="lbl" data-i18n="category"></span>
+    <select data-role="category" required><option value="" data-i18n="categoryPh"></option>${cats}</select>
+    <p class="err" role="alert" hidden></p>
+  </label>
+
+  <label class="field" data-f="desc">
+    <span class="lbl" data-i18n="desc"></span>
+    <input type="text" maxlength="120" data-role="desc" data-i18n-ph="descPh" required>
+    <p class="err" role="alert" hidden></p>
+  </label>`;
+}
+
+function addItem(focus){
+  if (state.items.length >= CONFIG.MAX_ITEMS) return;
+  const id = ++uidN;
+  const el = document.createElement("section");
+  el.className = "slip enter";
+  el.innerHTML = slipHTML(id);
+  $("#slips").appendChild(el);
+  const it = { id, el, file:null, previewUrl:null };
+  state.items.push(it);
+
+  $('[data-role="date"]', el).value = todayStr();
+  $('[data-role="date"]', el).max = todayStr();
+  const rh = $('[data-role="rhint"]', el); rh.dataset.i18n = "receiptHint"; rh._vars = {mb:CONFIG.MAX_FILE_MB};
+
+  el.addEventListener("click", e => {
+    const b = e.target.closest("[data-act]"); if (!b) return;
+    const act = b.dataset.act;
+    if (act === "remove") removeItem(it);
+    if (act === "cam")  $('[data-role="fileCam"]', el).click();
+    if (act === "pick") $('[data-role="filePick"]', el).click();
+  });
+  ["filePick","fileCam"].forEach(r => $('[data-role="'+r+'"]', el).addEventListener("change", e => {
+    const f = e.target.files && e.target.files[0]; e.target.value = ""; if (f) attachFile(it, f);
+  }));
+  const amt = $('[data-role="amount"]', el);
+  amt.addEventListener("input", () => { amt.value = amt.value.replace(/[^0-9.,]/g,""); updateTotals(); });
+  amt.addEventListener("blur", () => { const s = toSatang(amt.value); if (!isNaN(s) && s>0) amt.value = (s/100).toFixed(2); updateTotals(); });
+  ["date","category","desc"].forEach(r => $('[data-role="'+r+'"]', el).addEventListener("input", () => setError($('[data-f="'+r+'"]', el), null)));
+  amt.addEventListener("input", () => setError($('[data-f="amount"]', el), null));
+
+  renumber(); applyLang(); updateAddState();
+  if (focus) el.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"auto":"smooth", block:"center"});
+  return it;
+}
+
+function removeItem(it){
+  if (state.items.length === 1){ resetItem(it); return; }   // always keep one record
+  if (it.previewUrl) URL.revokeObjectURL(it.previewUrl);
+  it.el.remove();
+  state.items = state.items.filter(x => x !== it);
+  renumber(); updateTotals(); updateAddState();
+}
+function resetItem(it){
+  const el = it.el;
+  if (it.previewUrl) URL.revokeObjectURL(it.previewUrl);
+  it.file = null; it.previewUrl = null;
+  $('[data-role="empty"]', el).hidden = false; $('[data-role="has"]', el).hidden = true;
+  $('[data-role="drop"]', el).classList.remove("has");
+  $('[data-role="amount"]', el).value = ""; $('[data-role="desc"]', el).value = "";
+  $('[data-role="category"]', el).value = ""; $('[data-role="date"]', el).value = todayStr();
+  $$("[data-f]", el).forEach(f => setError(f, null));
+  updateTotals();
+}
+function renumber(){
+  state.items.forEach((it,i) => {
+    const h = $('[data-role="title"]', it.el);
+    h.dataset.i18n = "expenseN"; h._vars = {n:i+1}; h.textContent = t("expenseN", {n:i+1});
+    // the remove button is hidden when only a blank single record remains
+  });
+}
+function updateAddState(){
+  const full = state.items.length >= CONFIG.MAX_ITEMS;
+  $("#addBtn").hidden = full; $("#limitLine").hidden = !full;
+}
+
+/* ---- receipt files ---- */
+async function compressImage(file){
+  const bmp = await createImageBitmap(file, {imageOrientation:"from-image"});
+  const scale = Math.min(1, CONFIG.IMAGE_MAX_PX / Math.max(bmp.width, bmp.height));
+  const c = document.createElement("canvas");
+  c.width = Math.round(bmp.width*scale); c.height = Math.round(bmp.height*scale);
+  const ctx = c.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0,0,c.width,c.height);
+  ctx.drawImage(bmp, 0, 0, c.width, c.height);
+  const blob = await new Promise(res => c.toBlob(res, "image/jpeg", CONFIG.IMAGE_QUALITY));
+  if (!blob) throw new Error("encode");
+  return new File([blob], (file.name || "receipt").replace(/\.[^.]+$/,"") + ".jpg", {type:"image/jpeg"});
+}
+async function attachFile(it, file){
+  const field = $('[data-f="receipt"]', it.el), maxB = CONFIG.MAX_FILE_MB*1048576;
+  setError(field, null);
+  const isPdf = file.type === "application/pdf", isImg = file.type.startsWith("image/");
+  if (!isPdf && !isImg){ setError(field, "fileType"); return; }
+  $('[data-role="busy"]', it.el).hidden = false; $('[data-role="empty"]', it.el).hidden = true; $('[data-role="has"]', it.el).hidden = true;
+  let out = file;
+  try{
+    if (isImg){ try{ out = await compressImage(file); }catch(e){ out = file; } }
+    if (out.size > maxB) throw new Error("big");
+  }catch(e){
+    $('[data-role="busy"]', it.el).hidden = true;
+    $('[data-role="empty"]', it.el).hidden = !!it.file ? true : false;
+    $('[data-role="has"]', it.el).hidden = !it.file;
+    setError(field, "fileBig", {mb:CONFIG.MAX_FILE_MB}); return;
+  }
+  if (it.previewUrl) URL.revokeObjectURL(it.previewUrl);
+  it.file = out; it.previewUrl = isImg ? URL.createObjectURL(out) : null;
+  const wrap = $('[data-role="thumbWrap"]', it.el);
+  wrap.innerHTML = isImg ? '<img class="thumb" alt="">' : '<div class="pdfbox">PDF</div>';
+  if (isImg) $("img", wrap).src = it.previewUrl;
+  $('[data-role="fname"]', it.el).textContent = out.name;
+  $('[data-role="fsize"]', it.el).textContent = fmtBytes(out.size);
+  $('[data-role="busy"]', it.el).hidden = true;
+  $('[data-role="empty"]', it.el).hidden = true; $('[data-role="has"]', it.el).hidden = false;
+  $('[data-role="drop"]', it.el).classList.add("has");
+}
+
+/* =====================================================================
+   Totals
+   ===================================================================== */
+function totalSatang(){
+  return state.items.reduce((s,it) => { const v = toSatang($('[data-role="amount"]', it.el).value); return s + (isNaN(v)||v<0 ? 0 : v); }, 0);
+}
+function updateTotals(){
+  const total = totalSatang()/100, n = state.items.length;
+  $("#tapeLabel").textContent = t("total") + " (" + t(n === 1 ? "itemsOne" : "itemsMany", {n}) + ")";
+  $("#tapeTotal").textContent = money(total);
+  const ev = currentEvent(), w = $("#tapeWarn");
+  if (ev && ev.budget && total > ev.budget){ w.hidden = false; w.textContent = t("over", {x:money(total - ev.budget)}); }
+  else w.hidden = true;
+}
+
+/* =====================================================================
+   Validate + submit
+   ===================================================================== */
+function validate(){
+  const errs = [];
+  const check = (field, key, vars) => { setError(field, key, vars); if (key) errs.push(field); };
+
+  const evF = $('[data-f="event"]'); check(evF, $("#event").value ? null : "eventReq");
+  const nmF = $('[data-f="name"]');  check(nmF, $("#name").value.trim().length >= 2 ? null : "req");
+  const ppF = $('[data-f="pp"]');    check(ppF, ppOk($("#pp").value) ? null : "ppBad");
+
+  state.items.forEach(it => {
+    const el = it.el, f = r => $('[data-f="'+r+'"]', el);
+    check(f("receipt"), it.file ? null : "receiptReq");
+    const d = $('[data-role="date"]', el).value;
+    check(f("date"), !d ? "dateReq" : (d > todayStr() ? "dateFuture" : null));
+    const s = toSatang($('[data-role="amount"]', el).value);
+    check(f("amount"), (isNaN(s) || s <= 0) ? "amountBad" : (s > 100000000 ? "amountMax" : null));
+    check(f("category"), $('[data-role="category"]', el).value ? null : "catReq");
+    check(f("desc"), $('[data-role="desc"]', el).value.trim() ? null : "req");
+  });
+  return errs;
+}
+function toast(msg){
+  const el = $("#toast"); el.textContent = msg; el.hidden = false;
+  clearTimeout(toast._t); toast._t = setTimeout(() => el.hidden = true, 4500);
+}
+function buildPayload(key){
+  const ev = currentEvent();
+  return {
+    idempotencyKey:key, submittedAt:new Date().toISOString(), currency:"THB", lang,
+    line:{userId:state.liff.userId, displayName:state.liff.name},
+    event:{id:ev.id, name:ev.name},
+    payee:{name:$("#name").value.trim(), promptpay:normPP($("#pp").value)},
+    note:$("#note").value.trim(),
+    total:totalSatang()/100,
+    items:state.items.map((it,i) => ({
+      index:i+1, date:$('[data-role="date"]', it.el).value,
+      category:$('[data-role="category"]', it.el).value,
+      description:$('[data-role="desc"]', it.el).value.trim(),
+      amount:toSatang($('[data-role="amount"]', it.el).value)/100,
+      receiptField:"receipt_"+(i+1), receiptName:it.file.name, receiptType:it.file.type, receiptSize:it.file.size
+    }))
+  };
+}
+function fileToBase64(file){
+  return new Promise((res, rej) => { const r = new FileReader();
+    r.onload = () => res(String(r.result).split(",")[1]); r.onerror = () => rej(r.error); r.readAsDataURL(file); });
+}
+async function send(payload){
+  if (!CONFIG.API_URL){                       // demo mode
+    await new Promise(r => setTimeout(r, 900));
+    console.log("[demo] payload", payload);
+    return {reference:"DEMO-" + Math.random().toString(36).slice(2,8).toUpperCase()};
+  }
+  if (CONFIG.API_MODE === "apps-script"){
+    // Google Apps Script cannot read multipart uploads or custom headers, so send one plain-text JSON
+    // request with the receipts embedded as base64. The LINE login token travels in the body.
+    const receipts = await Promise.all(state.items.map(async (it,i) => ({
+      field:"receipt_"+(i+1), name:it.file.name, type:it.file.type, data:await fileToBase64(it.file)
+    })));
+    const body = JSON.stringify(Object.assign({}, payload, {receipts, accessToken: state.liff.token || null}));
+    const ctl2 = new AbortController(), to2 = setTimeout(() => ctl2.abort(), 120000);
+    try{
+      const r = await fetch(CONFIG.API_URL, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body, signal:ctl2.signal});
+      const data = await r.json();
+      if (!data.ok) throw new Error(data.error || "Server error");
+      return {reference:data.reference};
+    } finally { clearTimeout(to2); }
+  }
+  const fd = new FormData();
+  fd.append("payload", JSON.stringify(payload));
+  state.items.forEach((it,i) => fd.append("receipt_"+(i+1), it.file, it.file.name));
+  const headers = {"Idempotency-Key":payload.idempotencyKey};
+  if (state.liff.token) headers.Authorization = "Bearer " + state.liff.token;
+  const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 90000);
+  try{
+    const r = await fetch(CONFIG.API_URL, {method:"POST", body:fd, headers, signal:ctl.signal});
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    let data = {}; try{ data = await r.json(); }catch(e){}
+    return {reference: data.reference || data.id || data.ref || payload.idempotencyKey.slice(0,8).toUpperCase()};
+  } finally { clearTimeout(to); }
+}
+let pendingKey = null;
+async function onSubmit(){
+  if (state.submitting) return;
+  const errs = validate();
+  if (errs.length){
+    toast(t("fixN", {n:errs.length}));
+    const first = errs[0]; first.scrollIntoView({behavior:"smooth", block:"center"});
+    const inp = $("input:not([type=file]),select,textarea", first); inp && setTimeout(() => inp.focus({preventScroll:true}), 300);
+    return;
+  }
+  const totalBytes = state.items.reduce((s,it) => s + (it.file ? it.file.size : 0), 0);
+  if (CONFIG.API_URL && totalBytes > CONFIG.MAX_TOTAL_MB*1048576){ toast(t("totalBig", {mb:CONFIG.MAX_TOTAL_MB})); return; }
+  state.submitting = true; $("#submitBtn").disabled = true; $("#submitBtn").textContent = t("submitting");
+  pendingKey = pendingKey || uuid();         // same key on retry => backend can de-duplicate
+  try{
+    const payload = buildPayload(pendingKey);
+    const res = await send(payload);
+    if ($("#remember").checked) store.set("reimb.payee", {name:$("#name").value.trim(), pp:$("#pp").value.trim()});
+    else store.del("reimb.payee");
+    showDone(payload, res.reference);
+    pendingKey = null;
+    sendChatSummary(payload, res.reference);
+  }catch(e){
+    console.error(e);
+    toast(CONFIG.API_MODE === "apps-script" && e && e.message && !/fetch|network|abort|Failed/i.test(e.message) ? e.message : t("sendFail"));
+  }finally{
+    state.submitting = false; $("#submitBtn").disabled = false; $("#submitBtn").textContent = t("submit");
+  }
+}
+function showDone(p, ref){
+  $("#formView").hidden = true; $("#tape").hidden = true; $("#doneView").hidden = false;
+  $("#refNo").textContent = ref;
+  const box = $("#doneSummary"); box.innerHTML = "";
+  [["sumEvent", p.event.name], ["sumItems", String(p.items.length)], ["sumTotal", money(p.total)]].forEach(([k,v]) => {
+    const row = document.createElement("div"); row.className = "kv";
+    const a = document.createElement("span"); a.dataset.i18n = k; a.textContent = t(k);
+    const b = document.createElement("span"); b.textContent = v;
+    row.append(a,b); box.appendChild(row);
+  });
+  window.scrollTo(0,0);
+}
+async function sendChatSummary(p, ref){
+  if (!CONFIG.SEND_CHAT_SUMMARY || !window.liff || !state.liff.ok || !state.liff.inClient) return;
+  try{
+    await liff.sendMessages([{type:"text", text:t("chatMsg", {ref, event:p.event.name, total:money(p.total)})}]);
+  }catch(e){ /* needs chat_message.write scope and a chat context; safe to ignore */ }
+}
+
+/* =====================================================================
+   LIFF init
+   ===================================================================== */
+function showLiffBanner(msg){ const b = $("#liffBanner"); b.textContent = msg; b.hidden = false; }
+async function initLiff(){
+  if (!CONFIG.LIFF_ID || !window.liff){ state.demo = !CONFIG.API_URL; return true; }
+  try{
+    await liff.init({liffId:CONFIG.LIFF_ID});
+    if (!liff.isLoggedIn()){ liff.login({redirectUri:location.href}); return false; }
+    state.liff.ok = true; state.liff.inClient = liff.isInClient();
+    state.liff.token = liff.getAccessToken();
+    try{ const p = await liff.getProfile(); state.liff.userId = p.userId; state.liff.name = p.displayName; }catch(e){}
+    const l = (liff.getLanguage && liff.getLanguage() || "").toLowerCase();
+    if (l) lang = l.startsWith("th") ? "th" : "en";
+  }catch(e){
+    console.error(e); applyLang(); showLiffBanner(t("liffFail"));
+  }
+  state.demo = !CONFIG.API_URL;
+  return true;
+}
+
+/* =====================================================================
+   Boot
+   ===================================================================== */
+(async function boot(){
+  const saved = store.get("reimb.lang"); if (saved) lang = saved;
+  applyLang();
+  if (!(await initLiff())) return;
+  if (!store.get("reimb.lang")) applyLang();
+  await loadEvents();
+  const payee = store.get("reimb.payee");
+  if (payee){ $("#name").value = payee.name || ""; $("#pp").value = payee.pp || ""; }
+  $("#demoBanner").hidden = !state.demo;
+  addItem(false);
+  applyLang();
+
+  $("#langBtn").addEventListener("click", () => { lang = lang === "th" ? "en" : "th"; store.set("reimb.lang", lang); applyLang(); });
+  $("#event").addEventListener("change", () => { setError($('[data-f="event"]'), null); updateEventLine(); updateTotals(); });
+  $("#name").addEventListener("input", () => setError($('[data-f="name"]'), null));
+  $("#pp").addEventListener("input", () => setError($('[data-f="pp"]'), null));
+  $("#addBtn").addEventListener("click", () => addItem(true));
+  $("#submitBtn").addEventListener("click", onSubmit);
+  $("#closeBtn").addEventListener("click", () => { if (window.liff && state.liff.inClient) liff.closeWindow(); else window.close(); });
+  $("#againBtn").addEventListener("click", () => {
+    state.items.slice().forEach(it => { if (it.previewUrl) URL.revokeObjectURL(it.previewUrl); it.el.remove(); });
+    state.items = []; $("#note").value = ""; addItem(false);
+    $("#doneView").hidden = true; $("#formView").hidden = false; $("#tape").hidden = false; window.scrollTo(0,0); applyLang();
+  });
+})();
+</script>
+</body>
+</html>
