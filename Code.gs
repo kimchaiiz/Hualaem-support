@@ -9,7 +9,7 @@
  */
 
 // 1) PASTE YOUR LIFF ID HERE (looks like 1234567890-AbCdEfGh)
-const LIFF_ID = 'PASTE-YOUR-LIFF-ID-HERE';
+const LIFF_ID = '2012317989-JIt0K5fX';
 
 // 2) Optional settings
 const TIMEZONE = 'Asia/Bangkok';
