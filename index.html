@@ -194,6 +194,17 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
     </section>
   </div>
 
+  <!-- NOT ALLOWED / COULD NOT OPEN VIEW -->
+  <div id="gateView" class="done" hidden>
+    <h2 id="gateTitle"></h2>
+    <p class="sub" id="gateText"></p>
+    <div class="panel" style="margin-top:18px" id="gateWho" hidden>
+      <div class="kv"><span data-i18n="lineNameL"></span><span id="gateName"></span></div>
+    </div>
+    <p class="hint" id="gateNote" style="margin-top:12px" hidden></p>
+    <div class="stack"><button type="button" class="btn block-btn" id="gateClose" data-i18n="close"></button></div>
+  </div>
+
   <!-- SUCCESS VIEW -->
   <div id="doneView" class="done" hidden>
     <h2 data-i18n="doneTitle"></h2>
@@ -225,10 +236,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
    CONFIG - edit this block only
    ===================================================================== */
 const CONFIG = {
-  LIFF_ID: "2012317989-JIt0K5fX",              // 1) your LIFF ID, e.g. "1234567890-AbCdEfGh". Empty = demo mode
-  API_URL: "https://script.google.com/macros/s/AKfycbyHNavTqXEdatGur-8b-xmjI5CKz5QwSo77RlTKhoXMowGWX9oTKGFIwRuzIgPkwuoxkg/exec",              // 2) your Google web app URL (ends with /exec). Empty = demo mode, nothing is sent
-  EVENTS_URL: "https://script.google.com/macros/s/AKfycbyHNavTqXEdatGur-8b-xmjI5CKz5QwSo77RlTKhoXMowGWX9oTKGFIwRuzIgPkwuoxkg/exec?action=events",           // 3) same web app URL + ?action=events  (the drop-down reads the Events tab)
-  API_MODE: "apps-script",  // "apps-script" = Google Sheet + Drive.  "multipart" = your own server
+  LIFF_ID: "",              // 1) your LIFF ID, e.g. "1234567890-AbCdEfGh". Empty = demo mode
+  API_URL: "",              // 2) your Google web app URL (ends with /exec). Empty = demo mode, nothing is sent
   MAX_ITEMS: 10,            // max expense records per claim
   MAX_FILE_MB: 5,           // max size per receipt file after compression
   MAX_TOTAL_MB: 15,         // max size of all receipts in one claim
@@ -237,7 +246,7 @@ const CONFIG = {
   SEND_CHAT_SUMMARY: true,  // send a summary message to the LINE chat after submit (needs chat_message.write scope)
   DEFAULT_LANG: "th",
   CATEGORIES: ["venue","food","supplies","print","transport","other"],
-  // Fallback / sample events used when EVENTS_URL is empty or fails. budget in THB (optional).
+  // Sample events for demo mode only (API_URL empty). Real events come from the Events tab.
   EVENTS: [
     {id:"EV-2026-11", name:"Community Meetup – November", date:"2026-11-21", budget:5000},
     {id:"EV-2026-12", name:"Year-end Gathering", date:"2026-12-19", budget:12000}
@@ -276,6 +285,9 @@ const T = {
   close:"ปิด", again:"ส่งคำขออื่น",
   sumEvent:"กิจกรรม", sumItems:"จำนวนรายการ", sumTotal:"ยอดรวม",
   liffFail:"เชื่อมต่อ LINE ไม่สำเร็จ ลองเปิดจากแชทอีกครั้ง", eventsFail:"โหลดรายการกิจกรรมไม่สำเร็จ ใช้รายการที่บันทึกไว้แทน",
+  gateRoleT:"ยังไม่มีสิทธิ์เบิกค่าใช้จ่าย", gateRoleD:"ฟอร์มนี้สำหรับผู้จัดกิจกรรมและผู้อนุมัติ ส่งชื่อ LINE ด้านล่างให้ผู้ดูแลเพื่อขอสิทธิ์ แล้วเปิดฟอร์มนี้อีกครั้ง",
+  lineNameL:"ชื่อ LINE", gateNote:"เราบันทึกชื่อและรหัสผู้ใช้ LINE ของคุณไว้ เพื่อให้ผู้ดูแลเพิ่มสิทธิ์ได้ หากต้องการให้ลบ ติดต่อผู้ดูแล",
+  gateFailT:"เปิดฟอร์มไม่สำเร็จ", authFail:"การเชื่อมต่อ LINE หมดอายุ ปิดหน้านี้แล้วเปิดใหม่จากแชท",
   langBtn:"EN", chatMsg:"ส่งคำขอเบิกแล้ว\nเลขอ้างอิง {ref}\nกิจกรรม: {event}\nยอดรวม {total}"
  },
  en:{
@@ -306,6 +318,9 @@ const T = {
   close:"Close", again:"Submit another claim",
   sumEvent:"Event", sumItems:"Expenses", sumTotal:"Total",
   liffFail:"Couldn't connect to LINE. Try opening this from the chat again.", eventsFail:"Couldn't load events. Showing the saved list instead.",
+  gateRoleT:"You can't submit claims yet", gateRoleD:"This form is for organizers and approvers. Send the LINE name below to an admin to get access, then open this form again.",
+  lineNameL:"LINE name", gateNote:"We saved your LINE name and LINE user ID so an admin can give you access. Ask an admin if you want it deleted.",
+  gateFailT:"Couldn't open the form", authFail:"Your LINE session expired. Close this page and open it again from the chat.",
   langBtn:"ไทย", chatMsg:"Claim submitted\nReference {ref}\nEvent: {event}\nTotal {total}"
  }
 };
@@ -348,7 +363,7 @@ function setI18n(el, key, vars){ el.dataset.i18n = key; el._vars = vars; el.text
 /* =====================================================================
    State
    ===================================================================== */
-const state = { events:[], items:[], submitting:false, liff:{ok:false,userId:null,name:null,token:null,inClient:false}, demo:false };
+const state = { events:[], items:[], submitting:false, liff:{ok:false,userId:null,name:null,idToken:null,inClient:false}, demo:false };
 
 /* =====================================================================
    Validation helpers
@@ -383,19 +398,10 @@ const fmtBytes = b => b > 1048576 ? (b/1048576).toFixed(1)+" MB" : Math.max(1,Ma
 /* =====================================================================
    Events
    ===================================================================== */
-async function loadEvents(){
-  let list = CONFIG.EVENTS;
-  if (CONFIG.EVENTS_URL){
-    try{
-      const headers = (CONFIG.API_MODE !== "apps-script" && state.liff.token) ? {Authorization:"Bearer "+state.liff.token} : {};
-      const r = await fetch(CONFIG.EVENTS_URL, {headers});
-      if (!r.ok) throw new Error(r.status);
-      list = await r.json();
-    }catch(e){ showLiffBanner(t("eventsFail")); }
-  }
-  state.events = list;
+function fillEvents(list){
+  state.events = list || [];
   const sel = $("#event");
-  list.forEach(ev => {
+  state.events.forEach(ev => {
     const o = document.createElement("option");
     o.value = ev.id;
     o.textContent = ev.name;
@@ -615,7 +621,6 @@ function buildPayload(key){
   const ev = currentEvent();
   return {
     idempotencyKey:key, submittedAt:new Date().toISOString(), currency:"THB", lang,
-    line:{userId:state.liff.userId, displayName:state.liff.name},
     event:{id:ev.id, name:ev.name},
     payee:{name:$("#name").value.trim(), promptpay:normPP($("#pp").value)},
     note:$("#note").value.trim(),
@@ -633,39 +638,31 @@ function fileToBase64(file){
   return new Promise((res, rej) => { const r = new FileReader();
     r.onload = () => res(String(r.result).split(",")[1]); r.onerror = () => rej(r.error); r.readAsDataURL(file); });
 }
+// One plain-text JSON request (Apps Script cannot read custom headers). The LINE ID token travels in the
+// body and Code.gs checks it with LINE; the page never sends its own LINE user ID.
+async function api(body, timeoutMs){
+  const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), timeoutMs || 30000);
+  let data;
+  try{
+    const r = await fetch(CONFIG.API_URL, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body: JSON.stringify(Object.assign({}, body, {lineIdToken: state.liff.idToken || null})), signal:ctl.signal});
+    data = await r.json();
+  }catch(e){ const err = new Error(t("sendFail")); err.code = "NET"; throw err; }
+  finally{ clearTimeout(to); }
+  if (!data.ok){ const err = new Error(data.code === "AUTH" ? t("authFail") : (data.error || t("sendFail"))); err.code = data.code; throw err; }
+  return data;
+}
 async function send(payload){
   if (!CONFIG.API_URL){                       // demo mode
     await new Promise(r => setTimeout(r, 900));
     console.log("[demo] payload", payload);
     return {reference:"DEMO-" + Math.random().toString(36).slice(2,8).toUpperCase()};
   }
-  if (CONFIG.API_MODE === "apps-script"){
-    // Google Apps Script cannot read multipart uploads or custom headers, so send one plain-text JSON
-    // request with the receipts embedded as base64. The LINE login token travels in the body.
-    const receipts = await Promise.all(state.items.map(async (it,i) => ({
-      field:"receipt_"+(i+1), name:it.file.name, type:it.file.type, data:await fileToBase64(it.file)
-    })));
-    const body = JSON.stringify(Object.assign({}, payload, {receipts, accessToken: state.liff.token || null}));
-    const ctl2 = new AbortController(), to2 = setTimeout(() => ctl2.abort(), 120000);
-    try{
-      const r = await fetch(CONFIG.API_URL, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body, signal:ctl2.signal});
-      const data = await r.json();
-      if (!data.ok) throw new Error(data.error || "Server error");
-      return {reference:data.reference};
-    } finally { clearTimeout(to2); }
-  }
-  const fd = new FormData();
-  fd.append("payload", JSON.stringify(payload));
-  state.items.forEach((it,i) => fd.append("receipt_"+(i+1), it.file, it.file.name));
-  const headers = {"Idempotency-Key":payload.idempotencyKey};
-  if (state.liff.token) headers.Authorization = "Bearer " + state.liff.token;
-  const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 90000);
-  try{
-    const r = await fetch(CONFIG.API_URL, {method:"POST", body:fd, headers, signal:ctl.signal});
-    if (!r.ok) throw new Error("HTTP " + r.status);
-    let data = {}; try{ data = await r.json(); }catch(e){}
-    return {reference: data.reference || data.id || data.ref || payload.idempotencyKey.slice(0,8).toUpperCase()};
-  } finally { clearTimeout(to); }
+  const receipts = await Promise.all(state.items.map(async (it,i) => ({
+    field:"receipt_"+(i+1), name:it.file.name, type:it.file.type, data:await fileToBase64(it.file)
+  })));
+  const data = await api(Object.assign({}, payload, {action:"claim.submit", receipts}), 120000);
+  return {reference:data.reference};
 }
 let pendingKey = null;
 async function onSubmit(){
@@ -691,7 +688,8 @@ async function onSubmit(){
     sendChatSummary(payload, res.reference);
   }catch(e){
     console.error(e);
-    toast(CONFIG.API_MODE === "apps-script" && e && e.message && !/fetch|network|abort|Failed/i.test(e.message) ? e.message : t("sendFail"));
+    if (e && e.code === "FORBIDDEN"){ showGate("role", state.liff.name); return; }
+    toast(e && e.message ? e.message : t("sendFail"));
   }finally{
     state.submitting = false; $("#submitBtn").disabled = false; $("#submitBtn").textContent = t("submit");
   }
@@ -706,6 +704,17 @@ function showDone(p, ref){
     const b = document.createElement("span"); b.textContent = v;
     row.append(a,b); box.appendChild(row);
   });
+  window.scrollTo(0,0);
+}
+function showGate(kind, lineName, message){
+  $("#formView").hidden = true; $("#tape").hidden = true; $("#doneView").hidden = true; $("#gateView").hidden = false;
+  setI18n($("#gateTitle"), kind === "role" ? "gateRoleT" : "gateFailT");
+  if (kind === "role") setI18n($("#gateText"), "gateRoleD");
+  else { $("#gateText").removeAttribute("data-i18n"); $("#gateText").textContent = message || t("liffFail"); }
+  $("#gateWho").hidden = kind !== "role" || !lineName;
+  $("#gateName").textContent = lineName || "";
+  $("#gateNote").hidden = kind !== "role";
+  if (kind === "role") setI18n($("#gateNote"), "gateNote");
   window.scrollTo(0,0);
 }
 async function sendChatSummary(p, ref){
@@ -725,7 +734,7 @@ async function initLiff(){
     await liff.init({liffId:CONFIG.LIFF_ID});
     if (!liff.isLoggedIn()){ liff.login({redirectUri:location.href}); return false; }
     state.liff.ok = true; state.liff.inClient = liff.isInClient();
-    state.liff.token = liff.getAccessToken();
+    state.liff.idToken = liff.getIDToken();      // needs the openid scope
     try{ const p = await liff.getProfile(); state.liff.userId = p.userId; state.liff.name = p.displayName; }catch(e){}
     const l = (liff.getLanguage && liff.getLanguage() || "").toLowerCase();
     if (l) lang = l.startsWith("th") ? "th" : "en";
@@ -744,7 +753,18 @@ async function initLiff(){
   applyLang();
   if (!(await initLiff())) return;
   if (!store.get("reimb.lang")) applyLang();
-  await loadEvents();
+  $("#gateClose").addEventListener("click", () => { if (window.liff && state.liff.inClient) liff.closeWindow(); else window.close(); });
+  if (CONFIG.API_URL){
+    // Server decides: is this LINE user an organizer or approver? (role column in the Participants tab)
+    let r;
+    try{ r = await api({action:"claim.bootstrap"}); }
+    catch(e){ showGate("fail", null, e.message); return; }
+    if (!r.allowed){ showGate("role", r.lineName || state.liff.name); return; }
+    fillEvents(r.events);
+  } else {
+    if (new URLSearchParams(location.search).get("demo") === "blocked"){ showGate("role", "Kim (demo)"); return; }
+    fillEvents(CONFIG.EVENTS);
+  }
   const payee = store.get("reimb.payee");
   if (payee){ $("#name").value = payee.name || ""; $("#pp").value = payee.pp || ""; }
   $("#demoBanner").hidden = !state.demo;
