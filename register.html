@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="robots" content="noindex, nofollow">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://static.line-scdn.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://*.line-scdn.net; connect-src https://script.google.com https://script.googleusercontent.com https://*.line.me https://*.line-scdn.net; frame-src https://*.line.me; object-src 'none'; base-uri 'none'">
+<title>ลงทะเบียนกิจกรรม | Event registration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- LINE Front-end Framework (LIFF) SDK -->
+<script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+:root{
+  --bg:#E6ECF2; --slip:#FFFFFF; --field:#F3F6F9; --ink:#0E1726; --muted:#586477; --line:#D3DBE5;
+  --accent:#2447D6; --accent-ink:#FFFFFF; --accent-soft:#E7ECFD; --err:#B42318; --err-bg:#FDECEA;
+  --ok:#0F7A55; --ok-bg:#E3F4EC; --warn:#8A5A00; --warn-bg:#FFF3D1; --grey-bg:#EDF1F5; --bar:#0E1726;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0C121B; --slip:#161F2C; --field:#0F1722; --ink:#E8EDF4; --muted:#9AA7B8; --line:#2A3647;
+    --accent:#8AA2FF; --accent-ink:#0C121B; --accent-soft:#1E2A4A; --err:#FF9189; --err-bg:#3A1C1C;
+    --ok:#5CD0A3; --ok-bg:#12302A; --warn:#F2C26B; --warn-bg:#33290F; --grey-bg:#1C2633; --bar:#223046;
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans Thai","Sarabun","Noto Sans Thai",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.5;
+  padding:env(safe-area-inset-top,0) 0 calc(110px + env(safe-area-inset-bottom,0))}
+.wrap{max-width:560px;margin:0 auto;padding:0 16px}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+/* header */
+.top{display:flex;align-items:center;gap:12px;padding:18px 0 4px}
+.avatar{width:48px;height:48px;border-radius:50%;object-fit:cover;background:var(--accent-soft);color:var(--accent);flex:none;display:grid;place-items:center;font-weight:600;font-size:18px;border:2px solid var(--slip)}
+.hello{flex:1;min-width:0}
+.hello small{display:block;font-size:13px;color:var(--muted)}
+.hello b{display:block;font-size:17px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lang{flex:none;min-width:48px;height:36px;border:1px solid var(--line);background:var(--slip);border-radius:18px;font-size:14px;font-weight:500;padding:0 12px;cursor:pointer}
+.banner{margin:12px 0 0;padding:10px 12px;border-radius:10px;background:var(--warn-bg);color:var(--warn);font-size:14px}
+h1{font-size:22px;line-height:1.3;font-weight:600;margin:20px 0 12px}
+
+/* event cards */
+.cards{display:flex;flex-direction:column;gap:16px}
+.card{background:var(--slip);border-radius:16px;overflow:hidden;border:1px solid var(--line);cursor:pointer;text-align:left;padding:0;width:100%;display:block}
+.poster{width:100%;aspect-ratio:4/5;object-fit:cover;display:block;background:linear-gradient(135deg,#C9D4E2,#E6ECF2)}
+@media (prefers-color-scheme: dark){.poster{background:linear-gradient(135deg,#1C2633,#0F1722)}}
+.cbody{padding:14px 16px 16px}
+.when{font-size:13.5px;color:var(--accent);font-weight:600}
+.ename{font-size:18px;font-weight:600;margin:2px 0 4px;line-height:1.35}
+.meta{font-size:14px;color:var(--muted);margin:0}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.tag{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px;border-radius:14px;font-size:13px;font-weight:500;background:var(--grey-bg);color:var(--muted)}
+.tag.ok{background:var(--ok-bg);color:var(--ok)}
+.tag.info{background:var(--accent-soft);color:var(--accent)}
+.tag.warn{background:var(--warn-bg);color:var(--warn)}
+.empty{background:var(--slip);border-radius:16px;padding:36px 20px;text-align:center;color:var(--muted);border:1px solid var(--line)}
+.empty b{display:block;color:var(--ink);font-size:17px;margin-bottom:4px}
+.skel{background:var(--slip);border-radius:16px;height:420px;border:1px solid var(--line);position:relative;overflow:hidden}
+.skel::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);animation:sh 1.2s infinite}
+@keyframes sh{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+@media (prefers-reduced-motion:reduce){.skel::after{animation:none}}
+
+/* detail */
+.back{background:none;border:0;color:var(--accent);font-weight:500;font-size:15px;min-height:44px;padding:0;margin-top:6px;cursor:pointer}
+.dcard{background:var(--slip);border-radius:16px;overflow:hidden;border:1px solid var(--line)}
+.facts{margin:12px 0 0;padding:0;list-style:none}
+.facts li{display:grid;grid-template-columns:28px 1fr;gap:4px;padding:8px 0;border-top:1px solid var(--line);font-size:15px}
+.facts li:first-child{border-top:0}
+.facts .ic{color:var(--muted)}
+.facts small{display:block;color:var(--muted);font-size:13px}
+.descr{white-space:pre-line;font-size:15px;margin:12px 0 0;color:var(--ink)}
+.state{margin-top:12px;padding:12px 14px;border-radius:12px;font-size:14.5px}
+.state.ok{background:var(--ok-bg);color:var(--ok)}
+.state.warn{background:var(--warn-bg);color:var(--warn)}
+.state b{display:block;font-size:15.5px}
+
+/* form */
+.block{margin-top:22px}
+.block>h2{font-size:15px;font-weight:600;margin:0 0 8px}
+.panel{background:var(--slip);border-radius:16px;padding:16px;border:1px solid var(--line)}
+.prefill{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;color:var(--accent);background:var(--accent-soft);border-radius:10px;padding:9px 12px;margin-bottom:14px}
+.field{display:block;margin:0 0 14px}
+.field:last-child{margin-bottom:0}
+.lbl{display:block;font-size:14px;font-weight:500;color:var(--muted);margin-bottom:6px}
+.lbl .opt{font-weight:400}
+.hint{margin:6px 0 0;font-size:13px;color:var(--muted)}
+.err{margin:6px 0 0;font-size:13px;color:var(--err);font-weight:500}
+input[type=text],input[type=email],input[type=tel]{width:100%;min-height:48px;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--field);color:var(--ink);font:inherit;font-size:16px;appearance:none;-webkit-appearance:none}
+[aria-invalid=true]{border-color:var(--err)!important}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:360px){.row2{grid-template-columns:1fr}}
+.adorn{position:relative}
+.adorn span{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.adorn input{padding-left:30px}
+.consent{display:flex;gap:12px;align-items:flex-start;font-size:14px;color:var(--ink);cursor:pointer}
+.consent input{width:22px;height:22px;margin:2px 0 0;flex:none;accent-color:var(--accent)}
+.consent small{display:block;color:var(--muted);font-size:13px;margin-top:4px}
+
+/* bottom bar */
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--bar);color:#fff;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0));box-shadow:0 -6px 18px rgba(0,0,0,.14);z-index:10}
+.bar-in{max-width:560px;margin:0 auto;display:flex;align-items:center;gap:14px}
+.bar-l{flex:1;min-width:0;font-size:13px;color:#AEB9CB;line-height:1.35}
+.bar-l b{display:block;color:#fff;font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 20px;border-radius:12px;border:1.5px solid var(--accent);background:var(--accent);color:var(--accent-ink);font-weight:600;font-size:16px;cursor:pointer}
+.btn.sec{background:transparent;color:var(--accent)}
+.btn.block{width:100%}
+.btn[disabled]{opacity:.55;cursor:default}
+.bar .btn{background:#fff;color:#0E1726;border-color:#fff;min-width:150px}
+@media (prefers-color-scheme: dark){.bar .btn{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}}
+
+/* ticket */
+.ticket{position:relative;background:var(--slip);border-radius:16px 16px 0 0;padding:22px 18px 20px;margin-top:20px}
+.ticket::after{content:"";position:absolute;left:0;right:0;bottom:-9px;height:10px;
+  background:linear-gradient(135deg,var(--slip) 5px,transparent 0) 0 0/14px 10px repeat-x,linear-gradient(225deg,var(--slip) 5px,transparent 0) 0 0/14px 10px repeat-x}
+.check{width:52px;height:52px;border-radius:50%;background:var(--ok-bg);color:var(--ok);display:grid;place-items:center;font-size:28px;font-weight:600}
+.ticket h2{font-size:22px;margin:12px 0 2px}
+.ticket .sub{color:var(--muted);margin:0;font-size:14.5px}
+.ref{font-size:26px;font-weight:600;letter-spacing:.03em;font-variant-numeric:tabular-nums;margin:2px 0 0}
+.dash{border:0;border-top:1.5px dashed var(--line);margin:16px 0}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:6px 0;font-size:15px}
+.kv span:first-child{color:var(--muted);flex:none}
+.kv span:last-child{font-weight:500;text-align:right}
+.stack{display:flex;flex-direction:column;gap:10px;margin-top:28px}
+
+.toast{position:fixed;left:16px;right:16px;bottom:calc(92px + env(safe-area-inset-bottom,0));max-width:528px;margin:0 auto;background:var(--err-bg);color:var(--err);border:1px solid var(--err);padding:12px 14px;border-radius:12px;font-weight:500;font-size:14.5px;z-index:11}
+.fatal{margin-top:20vh;text-align:center;color:var(--muted)}
+.fatal b{display:block;color:var(--ink);font-size:18px;margin-bottom:6px}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="top">
+    <div class="avatar" id="avatarBox" aria-hidden="true"></div>
+    <div class="hello"><small data-i18n="hello"></small><b id="lineName">&nbsp;</b></div>
+    <button type="button" class="lang" id="langBtn" aria-label="Language"></button>
+  </header>
+  <div class="banner" id="demoBanner" hidden data-i18n="demo"></div>
+  <div class="banner" id="infoBanner" hidden></div>
+
+  <!-- LIST -->
+  <section id="vList">
+    <h1 data-i18n="listTitle"></h1>
+    <div class="cards" id="cards"><div class="skel"></div></div>
+  </section>
+
+  <!-- DETAIL + FORM -->
+  <section id="vDetail" hidden>
+    <button type="button" class="back" id="backBtn" data-i18n="allEvents"></button>
+    <article class="dcard">
+      <img class="poster" id="dPoster" alt="">
+      <div class="cbody">
+        <div class="when" id="dWhen"></div>
+        <h1 class="ename" id="dName" style="margin:2px 0 0"></h1>
+        <ul class="facts" id="dFacts"></ul>
+        <p class="descr" id="dDesc"></p>
+        <div class="state" id="dState" hidden></div>
+      </div>
+    </article>
+
+    <form id="regForm" novalidate>
+      <section class="block">
+        <h2 data-i18n="yourInfo"></h2>
+        <div class="panel">
+          <div class="prefill" id="prefillNote" hidden><span aria-hidden="true">✓</span><span data-i18n="prefilled"></span></div>
+          <div class="row2">
+            <label class="field" data-f="firstName"><span class="lbl" data-i18n="firstName"></span>
+              <input type="text" id="firstName" autocomplete="given-name" maxlength="60" required><p class="err" role="alert" hidden></p></label>
+            <label class="field" data-f="lastName"><span class="lbl" data-i18n="lastName"></span>
+              <input type="text" id="lastName" autocomplete="family-name" maxlength="60" required><p class="err" role="alert" hidden></p></label>
+          </div>
+          <label class="field" data-f="email"><span class="lbl" data-i18n="email"></span>
+            <input type="email" id="email" autocomplete="email" inputmode="email" maxlength="120" placeholder="name@example.com" required><p class="err" role="alert" hidden></p></label>
+          <label class="field" data-f="phone"><span class="lbl" data-i18n="phone"></span>
+            <input type="tel" id="phone" autocomplete="tel" inputmode="tel" maxlength="15" placeholder="08x xxx xxxx" required><p class="err" role="alert" hidden></p></label>
+          <label class="field" data-f="instagram"><span class="lbl"><span data-i18n="ig"></span> <span class="opt" data-i18n="optional"></span></span>
+            <div class="adorn"><span>@</span><input type="text" id="instagram" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="31" placeholder="username"></div>
+            <p class="err" role="alert" hidden></p></label>
+        </div>
+      </section>
+      <section class="block">
+        <div class="panel field" data-f="consent">
+          <label class="consent"><input type="checkbox" id="consent">
+            <span><span data-i18n="consent"></span><small data-i18n="consentSmall"></small></span></label>
+          <p class="err" role="alert" hidden></p>
+        </div>
+      </section>
+    </form>
+  </section>
+
+  <!-- DONE -->
+  <section id="vDone" hidden>
+    <div class="ticket">
+      <div class="check" aria-hidden="true">✓</div>
+      <h2 data-i18n="doneTitle"></h2>
+      <p class="sub" data-i18n="doneSub"></p>
+      <hr class="dash">
+      <p class="sub" data-i18n="ref"></p>
+      <p class="ref" id="doneRef"></p>
+      <hr class="dash">
+      <div id="doneKv"></div>
+    </div>
+    <div class="stack">
+      <button type="button" class="btn block" id="closeBtn" data-i18n="close"></button>
+      <button type="button" class="btn sec block" id="moreBtn" data-i18n="otherEvents"></button>
+    </div>
+  </section>
+
+  <div class="fatal" id="vFatal" hidden><b id="fatalT"></b><span id="fatalD"></span></div>
+</main>
+
+<div class="bar" id="bar" hidden>
+  <div class="bar-in">
+    <div class="bar-l"><b id="barName"></b><span id="barSub"></span></div>
+    <button type="button" class="btn" id="submitBtn"></button>
+  </div>
+</div>
+<div class="toast" id="toast" role="alert" hidden></div>
+
+<script>
+/* =====================================================================
+   CONFIG - edit this block only. Nothing here is secret.
+   ===================================================================== */
+const CONFIG = {
+  LIFF_ID: "",            // 1) the REGISTRATION LIFF ID, e.g. "1234567890-AbCdEfGh". Empty = demo mode
+  API_URL: "",            // 2) Google Apps Script web app address (ends with /exec). Empty = demo mode
+  ORG_NAME: "",           // 3) community name shown in the consent text, e.g. "Hualaem". Empty = "the organizers"
+  SEND_CHAT_MESSAGE: true,// post a confirmation in the LINE chat (needs the chat_message.write scope)
+  CONSENT_VERSION: "v1-2026-11",   // must match CONSENT_VERSION in Code.gs
+  DEFAULT_LANG: "th"
+};
+
+/* =====================================================================
+   Text
+   ===================================================================== */
+const T = {
+ th:{
+  hello:"สวัสดี", langBtn:"EN", demo:"โหมดทดลอง: ยังไม่ได้ส่งข้อมูลจริง",
+  listTitle:"กิจกรรมที่เปิดให้ลงทะเบียน", emptyT:"ยังไม่มีกิจกรรมในตอนนี้", emptyD:"เมื่อมีกิจกรรมใหม่ จะแสดงที่นี่",
+  allEvents:"← กิจกรรมทั้งหมด", regOpen:"เปิดรับสมัคร", regUpcoming:"เปิดรับสมัคร {d}", regClosed:"ปิดรับสมัครแล้ว", registered:"ลงทะเบียนแล้ว",
+  closesAt:"ปิดรับสมัคร {d}", dateL:"วันที่", timeL:"เวลา", placeL:"สถานที่", regL:"รับสมัคร",
+  stRegistered:"คุณลงทะเบียนกิจกรรมนี้แล้ว", stRegisteredD:"เลขอ้างอิง {ref}", stUpcoming:"ยังไม่เปิดรับสมัคร", stUpcomingD:"เปิดรับสมัคร {d}", stClosed:"ปิดรับสมัครแล้ว", stClosedD:"ขอบคุณที่สนใจ ติดตามกิจกรรมครั้งถัดไป",
+  yourInfo:"ข้อมูลผู้ลงทะเบียน", prefilled:"เราเติมข้อมูลจากครั้งก่อนให้แล้ว ตรวจสอบหรือแก้ไขได้",
+  firstName:"ชื่อ", lastName:"นามสกุล", email:"อีเมล", phone:"เบอร์มือถือ", ig:"Instagram", optional:"(ไม่บังคับ)",
+  consent:"ฉันยินยอมให้ {org} เก็บและใช้ชื่อ อีเมล เบอร์มือถือ Instagram และบัญชี LINE ของฉัน เพื่อจัดการการลงทะเบียนและติดต่อเรื่องกิจกรรม",
+  consentSmall:"ข้อมูลเปิดให้เฉพาะทีมผู้จัดงาน และใช้เติมข้อมูลให้อัตโนมัติครั้งถัดไป ขอดูหรือขอลบข้อมูลได้โดยติดต่อผู้จัดงานทาง LINE นี้",
+  orgFallback:"ผู้จัดกิจกรรม",
+  submit:"ลงทะเบียน", submitting:"กำลังส่ง…", notOpenBtn:"ยังไม่เปิดรับสมัคร", closedBtn:"ปิดรับสมัครแล้ว", doneBtn:"ลงทะเบียนแล้ว",
+  req:"กรอกข้อมูลนี้", emailBad:"รูปแบบอีเมลไม่ถูกต้อง", phoneBad:"ใส่เบอร์มือถือ 9–10 หลัก เช่น 0812345678", igBad:"ใช้ได้เฉพาะ a-z, 0-9, จุด และขีดล่าง (ไม่เกิน 30 ตัว)", consentReq:"กรุณายอมรับเพื่อลงทะเบียน",
+  fixN:"ตรวจสอบ {n} จุดที่ยังไม่ครบ",
+  doneTitle:"ลงทะเบียนสำเร็จ", doneSub:"แสดงหน้านี้หรือเลขอ้างอิงที่จุดลงทะเบียน", ref:"เลขอ้างอิง", already:"คุณลงทะเบียนกิจกรรมนี้ไว้แล้ว",
+  kEvent:"กิจกรรม", kWhen:"วันเวลา", kPlace:"สถานที่", kName:"ชื่อ",
+  close:"ปิด", otherEvents:"ดูกิจกรรมอื่น",
+  errAuth:"การเชื่อมต่อ LINE หมดอายุ ปิดหน้านี้แล้วเปิดใหม่จากแชท", errNotOpen:"กิจกรรมนี้ปิดรับสมัครแล้วหรือไม่เปิดแสดงแล้ว", errRate:"ส่งบ่อยเกินไป รอสักครู่แล้วลองใหม่",
+  errNet:"ส่งไม่สำเร็จ ข้อมูลยังอยู่ ลองอีกครั้ง", errLoad:"โหลดข้อมูลไม่สำเร็จ", errLoadD:"ปิดหน้านี้แล้วเปิดใหม่จาก LINE", liffFail:"เชื่อมต่อ LINE ไม่สำเร็จ",
+  notFound:"ไม่พบกิจกรรมนี้หรือปิดไปแล้ว แสดงกิจกรรมอื่นแทน",
+  chatMsg:"ลงทะเบียนสำเร็จ ✅\n{event}\n🗓 {when}\n📍 {place}\nเลขอ้างอิง {ref}"
+ },
+ en:{
+  hello:"Hello", langBtn:"ไทย", demo:"Demo mode: nothing is sent yet.",
+  listTitle:"Events open for registration", emptyT:"No events right now", emptyD:"New events will show up here.",
+  allEvents:"← All events", regOpen:"Registration open", regUpcoming:"Opens {d}", regClosed:"Registration closed", registered:"Registered",
+  closesAt:"Closes {d}", dateL:"Date", timeL:"Time", placeL:"Location", regL:"Registration",
+  stRegistered:"You're registered for this event", stRegisteredD:"Reference {ref}", stUpcoming:"Registration isn't open yet", stUpcomingD:"Opens {d}", stClosed:"Registration has closed", stClosedD:"Thanks for your interest. See you at the next one.",
+  yourInfo:"Your details", prefilled:"We filled in your details from last time. Check or edit them.",
+  firstName:"First name", lastName:"Last name", email:"Email", phone:"Mobile number", ig:"Instagram", optional:"(optional)",
+  consent:"I agree that {org} may collect and use my name, email, mobile number, Instagram and LINE account to manage registration and contact me about events.",
+  consentSmall:"Only the organizing team can see it, and it is used to fill in the form for you next time. To see or delete your data, message the organizers in this LINE chat.",
+  orgFallback:"the organizers",
+  submit:"Register", submitting:"Sending…", notOpenBtn:"Not open yet", closedBtn:"Registration closed", doneBtn:"Registered",
+  req:"Required", emailBad:"Email doesn't look right", phoneBad:"Enter a 9–10 digit mobile number, e.g. 0812345678", igBad:"Use a-z, 0-9, dots and underscores only (max 30)", consentReq:"Please agree to register",
+  fixN:"Fix {n} fields to continue",
+  doneTitle:"You're registered", doneSub:"Show this page or your reference at check-in.", ref:"Reference", already:"You had already registered for this event.",
+  kEvent:"Event", kWhen:"When", kPlace:"Where", kName:"Name",
+  close:"Close", otherEvents:"See other events",
+  errAuth:"Your LINE session expired. Close this page and open it again from the chat.", errNotOpen:"This event is closed for registration or no longer shown.", errRate:"Too many tries. Wait a moment and try again.",
+  errNet:"Couldn't send. Your details are still here. Try again.", errLoad:"Couldn't load events", errLoadD:"Close this page and open it again from LINE.", liffFail:"Couldn't connect to LINE.",
+  notFound:"That event isn't available. Showing other events.",
+  chatMsg:"Registered ✅\n{event}\n🗓 {when}\n📍 {place}\nReference {ref}"
+ }
+};
+
+/* =====================================================================
+   Helpers
+   ===================================================================== */
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+const store = { get(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } }, set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} } };
+let lang = CONFIG.DEFAULT_LANG;
+const t = (k, v) => { let s = (T[lang] && T[lang][k]) ?? T.en[k] ?? k; if (v) for (const [a,b] of Object.entries(v)) s = s.split("{"+a+"}").join(b); return s; };
+function h(tag, attrs, ...kids){
+  const el = document.createElement(tag);
+  for (const [k,v] of Object.entries(attrs || {})){
+    if (v == null || v === false) continue;
+    if (k === "class") el.className = v; else if (k === "text") el.textContent = v;
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v); else el.setAttribute(k, v === true ? "" : v);
+  }
+  kids.flat().forEach(c => { if (c != null && c !== false) el.append(c instanceof Node ? c : document.createTextNode(String(c))); });
+  return el;
+}
+const loc = () => lang === "th" ? "th-TH" : "en-GB";
+function fmtDate(d, o){ if (!d) return ""; return new Intl.DateTimeFormat(loc(), Object.assign({weekday:"short",day:"numeric",month:"short",year:"numeric",timeZone:"UTC"}, o||{})).format(new Date(d.slice(0,10)+"T00:00:00Z")); }
+const fmtDT = s => s ? fmtDate(s, {weekday:undefined}) + " " + s.slice(11,16) : "";
+const fmtTime = ev => ev.startTime ? ev.startTime + (ev.endTime ? "–" + ev.endTime : "") : "";
+const fmtWhen = ev => fmtDate(ev.date) + (ev.startTime ? " · " + fmtTime(ev) : "");
+const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : "id-" + Date.now() + "-" + Math.random().toString(16).slice(2));
+let toastT;
+function toast(msg){ const el = $("#toast"); el.textContent = msg; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => el.hidden = true, 5000); }
+
+/* =====================================================================
+   State
+   ===================================================================== */
+const demo = !CONFIG.API_URL;
+const state = { token:null, inClient:false, name:"", picture:"", idEmail:"", profile:null, events:[], cur:null, posters:{}, keys:{}, sending:false, view:"list", lastDone:null };
+
+function applyLang(){
+  document.documentElement.lang = lang;
+  $$("[data-i18n]").forEach(el => el.textContent = t(el.dataset.i18n));
+  $("#langBtn").textContent = t("langBtn");
+  const org = CONFIG.ORG_NAME || t("orgFallback");
+  $('[data-i18n="consent"]').textContent = t("consent", {org});
+  if (state.view === "list") renderList();
+  if (state.view === "detail" && state.cur) renderDetail(state.cur);
+  if (state.view === "done" && state.lastDone) renderDone(state.lastDone);
+}
+function show(view){
+  state.view = view;
+  $("#vList").hidden = view !== "list"; $("#vDetail").hidden = view !== "detail"; $("#vDone").hidden = view !== "done";
+  $("#vFatal").hidden = view !== "fatal"; $("#bar").hidden = view !== "detail";
+  $("#toast").hidden = true;
+  window.scrollTo(0,0);
+}
+function fatal(title, detail){ $("#fatalT").textContent = title; $("#fatalD").textContent = detail || ""; show("fatal"); }
+
+/* =====================================================================
+   API
+   ===================================================================== */
+class ApiError extends Error { constructor(m, c){ super(m); this.code = c; } }
+async function post(action, data){
+  if (demo) return demoApi(action, data || {});
+  let res;
+  const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 60000);
+  try{
+    const r = await fetch(CONFIG.API_URL, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body: JSON.stringify(Object.assign({}, data, {action, lineIdToken:state.token})), signal:ctl.signal});
+    res = await r.json();
+  }catch(e){ throw new ApiError(t("errNet"), "NET"); }
+  finally{ clearTimeout(to); }
+  if (res.ok) return res;
+  const map = {AUTH:"errAuth", NOT_OPEN:"errNotOpen", RATE:"errRate", SERVER:"errNet"};
+  throw new ApiError(map[res.code] ? t(map[res.code]) : res.error, res.code);
+}
+async function loadPoster(ev, img){
+  if (!ev.hasPoster){ img.hidden = true; img.removeAttribute("src"); return; }
+  img.hidden = false;
+  if (state.posters[ev.id]){ img.src = state.posters[ev.id]; return; }
+  try{
+    let p;
+    if (demo) p = DEMO.posters[ev.id];
+    else { const r = await fetch(CONFIG.API_URL + "?action=poster&event=" + encodeURIComponent(ev.id)); const j = await r.json(); p = j.ok && j.poster; }
+    if (!p || !/^image\/(jpeg|png|webp|svg\+xml)$/.test(p.type)) return;
+    if (p.type === "image/svg+xml" && !demo) return;
+    state.posters[ev.id] = `data:${p.type};base64,${p.data}`;
+    img.src = state.posters[ev.id];
+  }catch(e){ img.hidden = true; }
+}
+
+/* =====================================================================
+   List
+   ===================================================================== */
+function statusTag(ev){
+  if (ev.myReference) return h("span",{class:"tag ok",text:"✓ " + t("registered")});
+  if (ev.regState === "open") return h("span",{class:"tag info",text:t("regOpen") + " · " + t("closesAt",{d:fmtDT(ev.regClose)})});
+  if (ev.regState === "upcoming") return h("span",{class:"tag warn",text:t("regUpcoming",{d:fmtDT(ev.regOpen)})});
+  return h("span",{class:"tag",text:t("regClosed")});
+}
+function renderList(){
+  if (!state.events.length){
+    $("#cards").replaceChildren(h("div",{class:"empty"}, h("b",{text:t("emptyT")}), t("emptyD"))); return;
+  }
+  $("#cards").replaceChildren(...state.events.map(ev => {
+    const img = h("img",{class:"poster",alt:"",loading:"lazy"});
+    loadPoster(ev, img);
+    return h("button",{class:"card",type:"button",onclick:() => openDetail(ev)}, img,
+      h("div",{class:"cbody"},
+        h("div",{class:"when",text:fmtWhen(ev)}),
+        h("div",{class:"ename",text:ev.name}),
+        h("p",{class:"meta",text:"📍 " + ev.location}),
+        h("div",{class:"tags"}, statusTag(ev))));
+  }));
+}
+
+/* =====================================================================
+   Detail + form
+   ===================================================================== */
+function openDetail(ev){
+  state.cur = ev; show("detail"); renderDetail(ev);
+  try{ history.replaceState(null, "", "?event=" + encodeURIComponent(ev.id)); }catch(e){}
+}
+function renderDetail(ev){
+  loadPoster(ev, $("#dPoster"));
+  $("#dWhen").textContent = fmtDate(ev.date);
+  $("#dName").textContent = ev.name;
+  const fact = (ic, label, val) => val ? h("li",{}, h("span",{class:"ic","aria-hidden":"true",text:ic}), h("div",{}, h("small",{text:label}), val)) : null;
+  $("#dFacts").replaceChildren(...[
+    fact("🗓", t("dateL"), fmtDate(ev.date, {weekday:"long", month:"long"})),
+    fact("🕒", t("timeL"), fmtTime(ev)),
+    fact("📍", t("placeL"), ev.location),
+    fact("📝", t("regL"), fmtDT(ev.regOpen) + " – " + fmtDT(ev.regClose))
+  ].filter(Boolean));
+  $("#dDesc").textContent = ev.description || ""; $("#dDesc").hidden = !ev.description;
+  $("#backBtn").hidden = state.events.length < 2;
+
+  const st = $("#dState"), canReg = !ev.myReference && ev.regState === "open";
+  st.hidden = canReg;
+  if (ev.myReference){ st.className = "state ok"; st.replaceChildren(h("b",{text:t("stRegistered")}), t("stRegisteredD",{ref:ev.myReference})); }
+  else if (ev.regState === "upcoming"){ st.className = "state warn"; st.replaceChildren(h("b",{text:t("stUpcoming")}), t("stUpcomingD",{d:fmtDT(ev.regOpen)})); }
+  else if (ev.regState === "closed"){ st.className = "state warn"; st.replaceChildren(h("b",{text:t("stClosed")}), t("stClosedD")); }
+  $("#regForm").hidden = !canReg;
+
+  $("#barName").textContent = ev.name; $("#barSub").textContent = fmtWhen(ev);
+  const b = $("#submitBtn");
+  b.disabled = !canReg || state.sending;
+  b.textContent = state.sending ? t("submitting") : ev.myReference ? t("doneBtn") : ev.regState === "upcoming" ? t("notOpenBtn") : ev.regState === "closed" ? t("closedBtn") : t("submit");
+}
+function prefill(){
+  const p = state.profile;
+  if (p && p.firstName){
+    $("#firstName").value = p.firstName || ""; $("#lastName").value = p.lastName || ""; $("#email").value = p.email || "";
+    $("#phone").value = p.phone || ""; $("#instagram").value = p.instagram || "";
+    $("#consent").checked = p.consentVersion === CONFIG.CONSENT_VERSION;
+    $("#prefillNote").hidden = false;
+  } else if (state.idEmail){ $("#email").value = state.idEmail; }
+}
+function setErr(field, key){
+  const e = $(".err", field), i = $("input", field);
+  if (key){ e.textContent = t(key); e.hidden = false; i && i.setAttribute("aria-invalid","true"); }
+  else { e.hidden = true; i && i.removeAttribute("aria-invalid"); }
+}
+const normPhone = v => { let d = String(v||"").replace(/\D/g,""); if (d.startsWith("66") && (d.length === 11 || d.length === 10)) d = "0" + d.slice(2); return d; };
+function readForm(){
+  return { firstName:$("#firstName").value.trim(), lastName:$("#lastName").value.trim(), email:$("#email").value.trim(),
+           phone:normPhone($("#phone").value), instagram:$("#instagram").value.trim().replace(/^@+/,"") };
+}
+function validate(v){
+  const errs = [], chk = (f, key) => { const el = $(`[data-f="${f}"]`); setErr(el, key); if (key) errs.push(el); };
+  chk("firstName", v.firstName ? null : "req");
+  chk("lastName", v.lastName ? null : "req");
+  chk("email", !v.email ? "req" : (/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.email) ? null : "emailBad"));
+  chk("phone", !v.phone ? "req" : (/^0\d{8,9}$/.test(v.phone) ? null : "phoneBad"));
+  chk("instagram", !v.instagram || /^[A-Za-z0-9._]{1,30}$/.test(v.instagram) ? null : "igBad");
+  chk("consent", $("#consent").checked ? null : "consentReq");
+  return errs;
+}
+async function submit(){
+  const ev = state.cur;
+  if (state.sending || !ev || ev.myReference || ev.regState !== "open") return;
+  const v = readForm(), errs = validate(v);
+  if (errs.length){
+    toast(t("fixN",{n:errs.length})); errs[0].scrollIntoView({behavior:"smooth",block:"center"});
+    const i = $("input", errs[0]); i && setTimeout(() => i.focus({preventScroll:true}), 300); return;
+  }
+  state.sending = true; renderDetail(ev);
+  state.keys[ev.id] = state.keys[ev.id] || uuid();           // same key on retry = no double registration
+  try{
+    const r = await post("reg.register", {eventId:ev.id, profile:v, consent:true, consentVersion:CONFIG.CONSENT_VERSION, idempotencyKey:state.keys[ev.id]});
+    ev.myReference = r.reference;
+    state.profile = Object.assign({}, v, {consentVersion:CONFIG.CONSENT_VERSION});
+    state.lastDone = {ev, ref:r.reference, name:v.firstName + " " + v.lastName, duplicate:r.duplicate};
+    show("done"); renderDone(state.lastDone);
+    sendChat(ev, r.reference);
+  }catch(e){
+    toast(e.message);
+    if (e.code === "NOT_OPEN") { ev.regState = "closed"; }
+  }finally{
+    state.sending = false; if (state.view === "detail") renderDetail(ev);
+  }
+}
+function renderDone(d){
+  $("#doneRef").textContent = d.ref;
+  $('#vDone [data-i18n="doneSub"]').textContent = d.duplicate ? t("already") : t("doneSub");
+  const kv = (k, v) => h("div",{class:"kv"}, h("span",{text:t(k)}), h("span",{text:v}));
+  $("#doneKv").replaceChildren(kv("kEvent", d.ev.name), kv("kWhen", fmtWhen(d.ev)), kv("kPlace", d.ev.location), kv("kName", d.name));
+  $("#moreBtn").hidden = state.events.length < 2;
+}
+async function sendChat(ev, ref){
+  if (demo || !CONFIG.SEND_CHAT_MESSAGE || !window.liff || !state.inClient) return;
+  try{
+    const ctx = liff.getContext && liff.getContext();
+    if (ctx && ctx.type === "external") return;
+    await liff.sendMessages([{type:"text", text:t("chatMsg",{event:ev.name, when:fmtWhen(ev), place:ev.location, ref})}]);
+  }catch(e){ /* needs chat_message.write scope and a chat; safe to ignore */ }
+}
+
+/* =====================================================================
+   Header (LINE picture + name)
+   ===================================================================== */
+function renderHeader(){
+  $("#lineName").textContent = state.name || " ";
+  const box = $("#avatarBox");
+  if (state.picture && /^https:\/\/[a-z0-9.-]+\.line-scdn\.net\//i.test(state.picture)){
+    const img = h("img",{class:"avatar",alt:"",src:state.picture + "/small",referrerpolicy:"no-referrer"});
+    img.onerror = () => { img.replaceWith(initials()); };
+    box.replaceWith(img); img.id = "avatarBox";
+  } else box.textContent = (state.name || "?").trim().charAt(0).toUpperCase();
+  function initials(){ const d = h("div",{class:"avatar",id:"avatarBox","aria-hidden":"true"}); d.textContent = (state.name || "?").trim().charAt(0).toUpperCase(); return d; }
+}
+
+/* =====================================================================
+   Demo data (no API_URL)
+   ===================================================================== */
+function demoPoster(title, c1, c2){
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs><rect width="800" height="1000" fill="url(#g)"/><circle cx="640" cy="220" r="160" fill="#fff" opacity=".12"/><circle cx="140" cy="820" r="220" fill="#fff" opacity=".08"/><text x="60" y="700" font-family="sans-serif" font-size="78" font-weight="700" fill="#fff">${title}</text><text x="60" y="770" font-family="sans-serif" font-size="34" fill="#fff" opacity=".85">Community Event</text></svg>`;
+  return {type:"image/svg+xml", data:btoa(unescape(encodeURIComponent(svg)))};
+}
+const DEMO = (() => {
+  const d = new Date(), iso = n => { const x = new Date(d); x.setDate(x.getDate()+n); return x.toISOString().slice(0,10); };
+  return {
+    events:[
+      {id:"EV-2611-02", name:"Community Meetup – November", date:iso(15), startTime:"18:30", endTime:"21:00", location:"Co-working space, Ari",
+       description:"18:30 ลงทะเบียน · 19:00 แนะนำสมาชิกใหม่ · 19:30 Talk & networking\nแต่งกายสบาย ๆ", regOpen:iso(-3)+" 09:00", regClose:iso(13)+" 23:59", regState:"open", hasPoster:true, myReference:""},
+      {id:"EV-2612-01", name:"Year-end Gathering", date:iso(43), startTime:"17:00", endTime:"22:00", location:"Rooftop, Sukhumvit 24",
+       description:"", regOpen:iso(10)+" 09:00", regClose:iso(40)+" 23:59", regState:"upcoming", hasPoster:true, myReference:""}
+    ],
+    posters:{ "EV-2611-02":demoPoster("Meetup","#2447D6","#0E1726"), "EV-2612-01":demoPoster("Year-end","#0F7A55","#0E1726") },
+    profile:{firstName:"สมชาย", lastName:"ตัวอย่าง", email:"somchai@example.com", phone:"0800000001", instagram:"somchai.demo", consentVersion:CONFIG.CONSENT_VERSION},
+    seq:0
+  };
+})();
+async function demoApi(action, data){
+  await new Promise(r => setTimeout(r, 400));
+  if (action === "reg.bootstrap") return {ok:true, events:JSON.parse(JSON.stringify(DEMO.events)), profile: new URLSearchParams(location.search).has("new") ? null : DEMO.profile};
+  if (action === "reg.register"){ DEMO.seq++; return {ok:true, reference:"RG-DEMO-" + String(DEMO.seq).padStart(4,"0"), duplicate:false}; }
+  throw new ApiError("Unknown", "VALIDATION");
+}
+
+/* =====================================================================
+   Boot
+   ===================================================================== */
+async function initLiff(){
+  if (demo || !CONFIG.LIFF_ID || !window.liff){ state.name = "Kim (demo)"; return true; }
+  await liff.init({liffId:CONFIG.LIFF_ID});
+  if (!liff.isLoggedIn()){ liff.login({redirectUri:location.href}); return false; }
+  state.inClient = liff.isInClient();
+  state.token = liff.getIDToken();        // LINE ID token (needs the openid scope); Code.gs checks it with LINE
+  try{ const p = await liff.getProfile(); state.name = p.displayName || ""; state.picture = p.pictureUrl || ""; }catch(e){}
+  try{ const idt = liff.getDecodedIDToken && liff.getDecodedIDToken(); state.idEmail = (idt && idt.email) || ""; }catch(e){}
+  if (!store.get("reg.lang")){ const l = (liff.getLanguage && liff.getLanguage() || "").toLowerCase(); if (l) lang = l.startsWith("th") ? "th" : "en"; }
+  return true;
+}
+(async function boot(){
+  const saved = store.get("reg.lang"); if (saved) lang = saved;
+  applyLang();
+  $("#demoBanner").hidden = !demo;
+  try{ if (!(await initLiff())) return; }
+  catch(e){ console.error(e); applyLang(); fatal(t("liffFail"), t("errLoadD")); return; }
+  applyLang(); renderHeader();
+  try{
+    const r = await post("reg.bootstrap");
+    state.events = r.events; state.profile = r.profile;
+  }catch(e){ fatal(t("errLoad"), e.code === "AUTH" ? t("errAuth") : t("errLoadD")); return; }
+  prefill();
+  const want = new URLSearchParams(location.search).get("event");
+  const target = want && state.events.find(e => e.id === want);
+  if (want && !target){ const b = $("#infoBanner"); b.textContent = t("notFound"); b.hidden = false; }
+  if (target) openDetail(target);
+  else if (state.events.length === 1) openDetail(state.events[0]);
+  else { show("list"); renderList(); }
+})();
+
+$("#langBtn").addEventListener("click", () => { lang = lang === "th" ? "en" : "th"; store.set("reg.lang", lang); applyLang(); });
+$("#backBtn").addEventListener("click", () => { show("list"); renderList(); try{ history.replaceState(null, "", location.pathname); }catch(e){} });
+$("#submitBtn").addEventListener("click", submit);
+$("#regForm").addEventListener("submit", e => { e.preventDefault(); submit(); });
+$("#regForm").addEventListener("input", e => { const f = e.target.closest("[data-f]"); if (f) setErr(f, null); });
+$("#closeBtn").addEventListener("click", () => { if (window.liff && state.inClient) liff.closeWindow(); else window.close(); });
+$("#moreBtn").addEventListener("click", () => { show("list"); renderList(); });
+</script>
+</body>
+</html>

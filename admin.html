@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="robots" content="noindex, nofollow">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/client; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://*.googleusercontent.com; connect-src https://script.google.com https://script.googleusercontent.com https://accounts.google.com/gsi/; frame-src https://accounts.google.com/gsi/; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>จัดการกิจกรรม | Event admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E6ECF2; --card:#FFFFFF; --field:#F3F6F9; --ink:#0E1726; --muted:#586477; --line:#D3DBE5;
+  --accent:#2447D6; --accent-ink:#FFFFFF; --accent-soft:#E7ECFD; --err:#B42318; --err-bg:#FDECEA;
+  --ok:#0F7A55; --ok-bg:#E3F4EC; --warn:#8A5A00; --warn-bg:#FFF3D1; --grey-bg:#EDF1F5; --bar:#0E1726;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0C121B; --card:#161F2C; --field:#0F1722; --ink:#E8EDF4; --muted:#9AA7B8; --line:#2A3647;
+    --accent:#8AA2FF; --accent-ink:#0C121B; --accent-soft:#1E2A4A; --err:#FF9189; --err-bg:#3A1C1C;
+    --ok:#5CD0A3; --ok-bg:#12302A; --warn:#F2C26B; --warn-bg:#33290F; --grey-bg:#1C2633; --bar:#223046;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans Thai","Sarabun","Noto Sans Thai",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px;line-height:1.5}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+@media (max-width:600px){.wrap{padding:0 16px}}
+
+/* app bar */
+.appbar{position:sticky;top:0;z-index:20;background:var(--card);border-bottom:1px solid var(--line)}
+.appbar .wrap{display:flex;align-items:center;gap:12px;min-height:60px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:16px;margin-right:auto}
+.mark{width:30px;height:30px;border-radius:8px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-size:15px;font-weight:600}
+.who{font-size:13.5px;color:var(--muted);max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:600px){.who{display:none}}
+.pill-btn{min-height:36px;border:1px solid var(--line);background:var(--card);border-radius:18px;padding:0 14px;font-size:13.5px;font-weight:500;cursor:pointer}
+.banner{margin:14px 0 0;padding:10px 14px;border-radius:10px;background:var(--warn-bg);color:var(--warn);font-size:14px}
+
+/* buttons + fields */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 18px;border-radius:10px;border:1.5px solid var(--accent);background:var(--accent);color:var(--accent-ink);font-weight:600;font-size:15px;cursor:pointer;white-space:nowrap;text-decoration:none}
+.btn.sec{background:transparent;color:var(--accent)}
+.btn.ghost{background:transparent;border-color:var(--line);color:var(--ink)}
+.btn.sm{min-height:36px;padding:0 12px;font-size:14px;border-radius:9px}
+.btn[disabled]{opacity:.55;cursor:default}
+.link{background:none;border:0;color:var(--accent);font-weight:500;cursor:pointer;padding:6px 2px;min-height:36px}
+.link.danger{color:var(--err)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.field{display:block;margin:0 0 16px}
+.lbl{display:block;font-size:13.5px;font-weight:500;color:var(--muted);margin-bottom:6px}
+.lbl .opt{font-weight:400}
+.hint{margin:6px 0 0;font-size:13px;color:var(--muted)}
+.err{margin:6px 0 0;font-size:13px;color:var(--err);font-weight:500}
+input[type=text],input[type=date],input[type=time],input[type=datetime-local],input[type=search],input[type=number],textarea,select{
+  width:100%;min-height:44px;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--field);color:var(--ink);font:inherit;font-size:16px}
+textarea{min-height:110px;resize:vertical}
+[aria-invalid=true]{border-color:var(--err)!important}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+.grid3{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:0 14px}
+@media (max-width:560px){.grid2,.grid3{grid-template-columns:1fr}}
+
+/* page head */
+.phead{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:24px 0 14px}
+.phead h1{margin:0;font-size:24px;line-height:1.25;font-weight:600}
+.phead .sub{margin:2px 0 0;color:var(--muted);font-size:14px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+.chip{min-height:34px;border:1px solid var(--line);background:var(--card);border-radius:17px;padding:0 14px;font-size:13.5px;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--ink);color:var(--card);border-color:var(--ink)}
+
+/* event rows */
+.rows{display:flex;flex-direction:column;gap:10px;padding-bottom:40px}
+.erow{display:grid;grid-template-columns:64px 1fr auto;gap:16px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.dateblk{width:64px;height:64px;border-radius:12px;background:var(--accent-soft);color:var(--accent);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
+.dateblk b{font-size:24px;font-weight:600}
+.dateblk span{font-size:12px;font-weight:500}
+.ename{font-size:16.5px;font-weight:600;margin:0 0 2px}
+.emeta{font-size:13.5px;color:var(--muted);margin:0}
+.emeta+.emeta{margin-top:2px}
+.etags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.ract{display:flex;align-items:center;gap:14px}
+.count{text-align:right;min-width:72px}
+.count b{display:block;font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.count span{font-size:12px;color:var(--muted)}
+.rbtns{display:flex;flex-direction:column;gap:6px}
+@media (max-width:760px){
+  .erow{grid-template-columns:56px 1fr}
+  .dateblk{width:56px;height:56px}
+  .ract{grid-column:1/-1;justify-content:space-between;border-top:1px solid var(--line);padding-top:10px}
+  .count{text-align:left}
+  .rbtns{flex-direction:row}
+}
+.tag{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:13px;font-size:12.5px;font-weight:500;background:var(--grey-bg);color:var(--muted)}
+.tag::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.tag.ok{background:var(--ok-bg);color:var(--ok)}
+.tag.warn{background:var(--warn-bg);color:var(--warn)}
+.tag.info{background:var(--accent-soft);color:var(--accent)}
+.tag.plain::before{display:none}
+.empty{background:var(--card);border:1.5px dashed var(--line);border-radius:14px;padding:40px 20px;text-align:center;color:var(--muted)}
+.empty h2{color:var(--ink);font-size:18px;margin:0 0 4px}
+
+/* editor */
+.editor{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:24px;align-items:start;padding-bottom:110px}
+@media (max-width:980px){.editor{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:16px}
+.card h2{font-size:16px;font-weight:600;margin:0 0 4px}
+.card .desc{font-size:13.5px;color:var(--muted);margin:0 0 16px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media (max-width:560px){.seg{grid-template-columns:1fr}}
+.seg label{display:block;border:1.5px solid var(--line);border-radius:12px;padding:12px;cursor:pointer;background:var(--field)}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg b{display:block;font-size:14.5px}
+.seg span{display:block;font-size:12.5px;color:var(--muted);margin-top:2px}
+.seg label:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.seg label:has(input:focus-visible){outline:3px solid var(--accent);outline-offset:2px}
+
+.drop{border:1.5px dashed var(--line);border-radius:12px;background:var(--field);padding:16px;display:flex;gap:16px;align-items:center}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.pthumb{width:120px;aspect-ratio:4/5;border-radius:10px;background:var(--line);object-fit:cover;flex:none;display:grid;place-items:center;color:var(--muted);font-size:12.5px;text-align:center}
+.pinfo{flex:1;min-width:0}
+.pinfo .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+
+/* timeline */
+.tl{margin:4px 0 6px}
+.tl-row{display:grid;grid-template-columns:110px 1fr;gap:10px;align-items:center;margin:8px 0;font-size:13px;color:var(--muted)}
+.tl-track{position:relative;height:14px;border-radius:7px;background:var(--grey-bg)}
+.tl-bar{position:absolute;top:0;bottom:0;border-radius:7px}
+.tl-bar.pub{background:var(--accent)}
+.tl-bar.reg{background:var(--ok)}
+.tl-mark{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink)}
+.tl-mark.now{background:var(--err)}
+.tl-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:6px}
+.tl-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.warns{margin:10px 0 0;padding:0;list-style:none}
+.warns li{background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:8px 10px;font-size:13px;margin-top:6px}
+
+/* phone preview */
+.side{position:sticky;top:76px}
+@media (max-width:980px){.side{position:static}}
+.side h3{font-size:13.5px;color:var(--muted);font-weight:500;margin:0 0 8px}
+.phone{background:#E6ECF2;border-radius:24px;padding:14px;border:1px solid var(--line)}
+@media (prefers-color-scheme: dark){.phone{background:#0C121B}}
+.pcard{background:var(--card);border-radius:14px;overflow:hidden;border:1px solid var(--line)}
+.pcard .poster{width:100%;aspect-ratio:4/5;object-fit:cover;display:block;background:linear-gradient(135deg,#C9D4E2,#E6ECF2)}
+.pcard .body{padding:12px 14px 14px}
+.pcard .when{font-size:12.5px;color:var(--accent);font-weight:600}
+.pcard .nm{font-size:16px;font-weight:600;margin:2px 0}
+.pcard .loc{font-size:13px;color:var(--muted)}
+.pcard .cta{margin-top:10px;width:100%;min-height:40px;border-radius:10px;border:0;background:var(--accent);color:var(--accent-ink);font-weight:600}
+.pcard .cta[disabled]{background:var(--grey-bg);color:var(--muted)}
+
+/* save bar */
+.savebar{position:fixed;left:0;right:0;bottom:0;background:var(--bar);color:#fff;z-index:15}
+.savebar .wrap{display:flex;align-items:center;gap:12px;min-height:68px}
+.savebar .msg{flex:1;font-size:13.5px;color:#C7D1E0;min-width:0}
+.savebar .btn{background:#fff;color:#0E1726;border-color:#fff}
+.savebar .btn.ghost{background:transparent;color:#fff;border-color:#5B6B82}
+
+/* registrants */
+.tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.tools input{max-width:320px}
+.pdpa{font-size:13px;color:var(--muted);margin:0 0 12px}
+.tablewrap{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:auto;margin-bottom:40px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:12.5px;color:var(--muted);font-weight:500;background:var(--field);position:sticky;top:0}
+tr:last-child td{border-bottom:0}
+td.num{font-variant-numeric:tabular-nums;color:var(--muted)}
+
+/* sign-in */
+.signin{max-width:420px;margin:12vh auto 0;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:28px}
+.signin h1{font-size:22px;margin:0 0 6px}
+.signin p{color:var(--muted);margin:0 0 20px;font-size:14.5px}
+#gsiBtn,#gsiBtn2{min-height:44px}
+.modal{position:fixed;inset:0;background:rgba(14,23,38,.5);display:grid;place-items:center;z-index:50;padding:16px}
+.modal .signin{margin:0}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:88px;max-width:min(560px,calc(100% - 32px));padding:12px 16px;border-radius:12px;font-weight:500;font-size:14.5px;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.toast.bad{background:var(--err-bg);color:var(--err);border:1px solid var(--err)}
+.toast.good{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok)}
+.loading{padding:40px 0;color:var(--muted);text-align:center}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+<header class="appbar">
+  <div class="wrap">
+    <div class="brand"><span class="mark" aria-hidden="true">E</span><span data-i18n="appName"></span></div>
+    <span class="who" id="who"></span>
+    <button class="pill-btn" id="langBtn" type="button" aria-label="Language"></button>
+    <button class="pill-btn" id="signOutBtn" type="button" hidden data-i18n="signOut"></button>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="banner" id="demoBanner" hidden data-i18n="demo"></div>
+
+  <!-- SIGN IN -->
+  <section id="vSignin" hidden>
+    <div class="signin">
+      <h1 data-i18n="signinTitle"></h1>
+      <p data-i18n="signinSub"></p>
+      <div id="gsiBtn"></div>
+      <p class="err" id="signinErr" role="alert" hidden></p>
+    </div>
+  </section>
+
+  <!-- EVENT LIST -->
+  <section id="vList" hidden>
+    <div class="phead">
+      <div><h1 data-i18n="events"></h1><p class="sub" id="listSub"></p></div>
+      <button class="btn" type="button" id="newBtn" data-i18n="newEvent"></button>
+    </div>
+    <div class="chips" role="group" id="filters">
+      <button class="chip" type="button" data-filter="all" aria-pressed="true" data-i18n="fAll"></button>
+      <button class="chip" type="button" data-filter="live" aria-pressed="false" data-i18n="fLive"></button>
+      <button class="chip" type="button" data-filter="scheduled" aria-pressed="false" data-i18n="fScheduled"></button>
+      <button class="chip" type="button" data-filter="draft" aria-pressed="false" data-i18n="fDraft"></button>
+      <button class="chip" type="button" data-filter="past" aria-pressed="false" data-i18n="fPast"></button>
+    </div>
+    <div class="rows" id="rows"><div class="loading" data-i18n="loading"></div></div>
+  </section>
+
+  <!-- EDITOR -->
+  <section id="vEdit" hidden>
+    <div class="phead">
+      <div>
+        <button class="link" type="button" data-act="back" data-i18n="backToList"></button>
+        <h1 id="editTitle"></h1>
+        <p class="sub" id="editSub"></p>
+      </div>
+    </div>
+    <div class="editor">
+      <form id="evForm" novalidate>
+        <div class="card">
+          <h2 data-i18n="secDetails"></h2>
+          <p class="desc" data-i18n="secDetailsD"></p>
+          <label class="field" data-f="name"><span class="lbl" data-i18n="fName"></span>
+            <input type="text" id="fName" maxlength="120" required><p class="err" hidden></p></label>
+          <div class="grid3">
+            <label class="field" data-f="date"><span class="lbl" data-i18n="fDate"></span>
+              <input type="date" id="fDate" required><p class="err" hidden></p></label>
+            <label class="field" data-f="start"><span class="lbl"><span data-i18n="fStart"></span> <span class="opt" data-i18n="optional"></span></span>
+              <input type="time" id="fStart"><p class="err" hidden></p></label>
+            <label class="field" data-f="end"><span class="lbl"><span data-i18n="fEnd"></span> <span class="opt" data-i18n="optional"></span></span>
+              <input type="time" id="fEnd"><p class="err" hidden></p></label>
+          </div>
+          <label class="field" data-f="location"><span class="lbl" data-i18n="fLocation"></span>
+            <input type="text" id="fLocation" maxlength="200" required data-i18n-ph="fLocationPh"><p class="err" hidden></p></label>
+          <label class="field" data-f="desc"><span class="lbl"><span data-i18n="fDesc"></span> <span class="opt" data-i18n="optional"></span></span>
+            <textarea id="fDesc" maxlength="2000" data-i18n-ph="fDescPh"></textarea></label>
+          <label class="field" data-f="budget" style="max-width:260px"><span class="lbl"><span data-i18n="fBudget"></span> <span class="opt" data-i18n="optional"></span></span>
+            <input type="text" id="fBudget" inputmode="decimal" placeholder="0.00"><p class="hint" data-i18n="fBudgetHint"></p><p class="err" hidden></p></label>
+        </div>
+
+        <div class="card">
+          <h2 data-i18n="secPoster"></h2>
+          <p class="desc" data-i18n="secPosterD"></p>
+          <div class="drop" id="drop" data-f="poster">
+            <img class="pthumb" id="pThumb" alt="" hidden>
+            <div class="pthumb" id="pNone" data-i18n="noPoster"></div>
+            <div class="pinfo">
+              <div id="pName" style="font-weight:500"></div>
+              <div class="hint" id="pHint"></div>
+              <div class="btns">
+                <button type="button" class="btn sec sm" id="pPick" data-i18n="choosePoster"></button>
+                <button type="button" class="link danger" id="pRemove" data-i18n="removePoster" hidden></button>
+              </div>
+              <p class="err" id="pErr" hidden></p>
+            </div>
+            <input type="file" id="pFile" accept="image/jpeg,image/png,image/webp" hidden>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 data-i18n="secSchedule"></h2>
+          <p class="desc" data-i18n="secScheduleD"></p>
+          <div class="grid2">
+            <label class="field" data-f="regOpen"><span class="lbl" data-i18n="fRegOpen"></span>
+              <input type="datetime-local" id="fRegOpen" required><p class="err" hidden></p></label>
+            <label class="field" data-f="regClose"><span class="lbl" data-i18n="fRegClose"></span>
+              <input type="datetime-local" id="fRegClose" required><p class="err" hidden></p></label>
+            <label class="field" data-f="pubFrom"><span class="lbl" data-i18n="fPubFrom"></span>
+              <input type="datetime-local" id="fPubFrom" required><p class="err" hidden></p></label>
+            <label class="field" data-f="pubUntil"><span class="lbl" data-i18n="fPubUntil"></span>
+              <input type="datetime-local" id="fPubUntil" required><p class="err" hidden></p></label>
+          </div>
+          <div class="tl" id="timeline" aria-hidden="true"></div>
+          <ul class="warns" id="warns"></ul>
+        </div>
+
+        <div class="card">
+          <h2 data-i18n="secStatus"></h2>
+          <p class="desc" data-i18n="secStatusD"></p>
+          <div class="seg" role="radiogroup">
+            <label><input type="radio" name="status" value="Draft"><b data-i18n="stDraft"></b><span data-i18n="stDraftD"></span></label>
+            <label><input type="radio" name="status" value="Approved"><b data-i18n="stPub"></b><span data-i18n="stPubD"></span></label>
+            <label><input type="radio" name="status" value="Closed"><b data-i18n="stClosed"></b><span data-i18n="stClosedD"></span></label>
+          </div>
+        </div>
+      </form>
+
+      <aside class="side">
+        <h3 data-i18n="preview"></h3>
+        <div class="phone">
+          <div class="pcard">
+            <img class="poster" id="pvPoster" alt="">
+            <div class="body">
+              <div class="when" id="pvWhen"></div>
+              <div class="nm" id="pvName"></div>
+              <div class="loc" id="pvLoc"></div>
+              <div class="etags" id="pvTags"></div>
+              <button class="cta" type="button" id="pvCta" tabindex="-1"></button>
+            </div>
+          </div>
+        </div>
+        <p class="hint" id="pvState" style="margin-top:10px"></p>
+        <div id="shareBox" hidden style="margin-top:14px">
+          <h3 data-i18n="shareLink"></h3>
+          <div style="display:flex;gap:8px"><input type="text" id="shareUrl" readonly><button class="btn sec sm" type="button" id="copyBtn" data-i18n="copy"></button></div>
+        </div>
+      </aside>
+    </div>
+    <div class="savebar">
+      <div class="wrap">
+        <div class="msg" id="saveMsg"></div>
+        <button class="btn ghost" type="button" data-act="back" data-i18n="cancel"></button>
+        <button class="btn" type="button" id="saveBtn" data-i18n="save"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- REGISTRANTS -->
+  <section id="vRegs" hidden>
+    <div class="phead">
+      <div>
+        <button class="link" type="button" data-act="back" data-i18n="backToList"></button>
+        <h1 id="regTitle"></h1>
+        <p class="sub" id="regSub"></p>
+      </div>
+    </div>
+    <div class="tools">
+      <label class="sr" for="regSearch" data-i18n="search"></label>
+      <input type="search" id="regSearch" data-i18n-ph="searchPh">
+      <button class="btn sec" type="button" id="csvBtn" data-i18n="csv"></button>
+    </div>
+    <p class="pdpa" data-i18n="pdpaNote"></p>
+    <div class="tablewrap"><table>
+      <thead><tr>
+        <th>#</th><th data-i18n="cFirst"></th><th data-i18n="cLast"></th><th data-i18n="cEmail"></th><th>Instagram</th>
+        <th data-i18n="cPhone"></th><th data-i18n="cLine"></th><th data-i18n="cAt"></th><th data-i18n="cRef"></th><th data-i18n="cStatus"></th>
+      </tr></thead>
+      <tbody id="regBody"></tbody>
+    </table></div>
+  </section>
+</main>
+
+<div class="modal" id="reauth" hidden>
+  <div class="signin" role="dialog" aria-modal="true" aria-labelledby="reauthT">
+    <h1 id="reauthT" data-i18n="reauthTitle"></h1>
+    <p data-i18n="reauthSub"></p>
+    <div id="gsiBtn2"></div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+/* =====================================================================
+   CONFIG - edit this block only. Nothing here is secret.
+   ===================================================================== */
+const CONFIG = {
+  API_URL: "",            // 1) Google Apps Script web app address (ends with /exec). Empty = demo mode
+  GOOGLE_CLIENT_ID: "",   // 2) OAuth Client ID, e.g. "1234-abc.apps.googleusercontent.com"
+  REGISTER_LIFF_URL: "",  // 3) optional: "https://liff.line.me/YOUR-REGISTER-LIFF-ID" (to copy a share link per event)
+  MAX_POSTER_MB: 5,
+  POSTER_MAX_PX: 1600,
+  DEFAULT_LANG: "th"
+};
+if (window.top !== window.self) { document.documentElement.style.display = "none"; }   // do not run inside other sites' frames
+
+/* =====================================================================
+   Text
+   ===================================================================== */
+const T = {
+ th:{
+  appName:"จัดการกิจกรรม", signOut:"ออกจากระบบ", langBtn:"EN", demo:"โหมดทดลอง: ข้อมูลอยู่ในหน้านี้เท่านั้น ยังไม่ได้เชื่อมต่อ Google Sheet",
+  signinTitle:"เข้าสู่ระบบผู้ดูแล", signinSub:"ใช้บัญชี Google ที่ได้รับสิทธิ์ผู้ดูแลกิจกรรม", notAdmin:"บัญชีนี้ไม่มีสิทธิ์ผู้ดูแล ติดต่อเจ้าของระบบเพื่อขอสิทธิ์",
+  setupMissing:"ยังไม่ได้ตั้งค่า GOOGLE_CLIENT_ID ในหน้านี้", reauthTitle:"กรุณาเข้าสู่ระบบอีกครั้ง", reauthSub:"เซสชันหมดอายุ ข้อมูลที่กรอกไว้ยังอยู่",
+  events:"กิจกรรม", listSub:"{n} กิจกรรม · {r} คนลงทะเบียนทั้งหมด", newEvent:"+ สร้างกิจกรรม",
+  fAll:"ทั้งหมด", fLive:"แสดงใน LINE", fScheduled:"ตั้งเวลาไว้", fDraft:"ฉบับร่าง", fPast:"จบแล้ว/ปิด",
+  loading:"กำลังโหลด…", emptyT:"ยังไม่มีกิจกรรม", emptyD:"กด “สร้างกิจกรรม” เพื่อเริ่ม", emptyFilter:"ไม่มีกิจกรรมในหมวดนี้",
+  registered:"ลงทะเบียน", edit:"แก้ไข", registrants:"รายชื่อ",
+  backToList:"← กลับไปหน้ากิจกรรม", newTitle:"สร้างกิจกรรมใหม่", editTitle:"แก้ไขกิจกรรม", lastEdit:"แก้ไขล่าสุด {at} โดย {by}",
+  secDetails:"รายละเอียดกิจกรรม", secDetailsD:"ข้อมูลนี้แสดงให้ผู้เข้าร่วมเห็นใน LINE",
+  fName:"ชื่อกิจกรรม", fDate:"วันที่จัด", fStart:"เวลาเริ่ม", fEnd:"เวลาจบ", optional:"(ไม่บังคับ)",
+  fLocation:"สถานที่", fLocationPh:"เช่น ห้องประชุม ชั้น 5 อาคาร A", fDesc:"รายละเอียดเพิ่มเติม", fDescPh:"กำหนดการ สิ่งที่ต้องเตรียม การแต่งกาย ฯลฯ",
+  fBudget:"งบประมาณที่อนุมัติ (บาท)", fBudgetHint:"ใช้ในฟอร์มเบิกค่าใช้จ่าย ผู้เข้าร่วมไม่เห็น",
+  secPoster:"โปสเตอร์", secPosterD:"แนะนำแนวตั้ง 4:5 ระบบย่อขนาดให้อัตโนมัติ (JPG, PNG, WebP)",
+  noPoster:"ยังไม่มีโปสเตอร์", choosePoster:"เลือกรูป", replacePoster:"เปลี่ยนรูป", removePoster:"ลบโปสเตอร์", posterHint:"ลากรูปมาวางตรงนี้ได้",
+  posterBig:"ไฟล์ใหญ่เกิน {mb} MB หลังย่อขนาด", posterType:"รองรับเฉพาะ JPG, PNG หรือ WebP", posterBusy:"กำลังย่อขนาดรูป…", posterLoading:"กำลังโหลดโปสเตอร์…",
+  secSchedule:"กำหนดเวลา (เวลาประเทศไทย)", secScheduleD:"ผู้เข้าร่วมเห็นกิจกรรมเฉพาะช่วง “แสดงใน LINE” และสมัครได้เฉพาะช่วง “รับสมัคร”",
+  fRegOpen:"เปิดรับสมัคร", fRegClose:"ปิดรับสมัคร", fPubFrom:"แสดงใน LINE ตั้งแต่", fPubUntil:"ซ่อนจาก LINE หลัง",
+  tlPub:"แสดงใน LINE", tlReg:"รับสมัคร", tlEvent:"วันกิจกรรม", tlNow:"ตอนนี้",
+  wRegOutside:"ช่วงรับสมัครบางส่วนอยู่นอกช่วงที่แสดงใน LINE ผู้เข้าร่วมจะสมัครได้เฉพาะช่วงที่ทับกัน",
+  wRegAfterEvent:"ปิดรับสมัครหลังเวลาเริ่มกิจกรรม", wHideBeforeEvent:"กิจกรรมจะถูกซ่อนก่อนถึงวันจัด", wPast:"วันจัดกิจกรรมผ่านไปแล้ว",
+  secStatus:"สถานะ", secStatusD:"เลือกว่าจะให้กิจกรรมนี้แสดงหรือไม่",
+  stDraft:"ฉบับร่าง", stDraftD:"ยังไม่แสดงใน LINE", stPub:"เผยแพร่", stPubD:"แสดงตามเวลาที่ตั้งไว้ และเปิดให้เบิกค่าใช้จ่าย", stClosed:"ปิดกิจกรรม", stClosedD:"ซ่อนจาก LINE และปิดการเบิก",
+  preview:"ตัวอย่างใน LINE", shareLink:"ลิงก์สำหรับแชร์ใน LINE", copy:"คัดลอก", copied:"คัดลอกลิงก์แล้ว",
+  ctaOpen:"ลงทะเบียน", ctaUpcoming:"เปิดรับสมัคร {d}", ctaClosed:"ปิดรับสมัครแล้ว",
+  cancel:"ยกเลิก", save:"บันทึก", saving:"กำลังบันทึก…", saved:"บันทึกแล้ว", unsaved:"มีการแก้ไขที่ยังไม่ได้บันทึก", discard:"ทิ้งการแก้ไขที่ยังไม่ได้บันทึก?",
+  req:"กรอกข้อมูลนี้", fixN:"ตรวจสอบ {n} จุดที่ยังไม่ถูกต้อง", timeOrder:"เวลาจบต้องหลังเวลาเริ่ม", closeAfterOpen:"ต้องหลังเวลาเปิดรับสมัคร", untilAfterFrom:"ต้องหลังเวลาเริ่มแสดง", budgetBad:"ใส่ตัวเลข 0 ขึ้นไป",
+  sDraft:"ฉบับร่าง", sClosed:"ปิดแล้ว", sScheduled:"ตั้งเวลาแสดง {d}", sHidden:"หมดเวลาแสดง", sNoWindow:"ยังไม่ได้ตั้งเวลาแสดง",
+  sRegOpen:"เปิดรับสมัคร", sRegUpcoming:"แสดงอยู่ · รอเปิดรับสมัคร", sRegClosed:"แสดงอยู่ · ปิดรับสมัครแล้ว",
+  pvState_draft:"ผู้เข้าร่วมยังไม่เห็นกิจกรรมนี้ (ฉบับร่าง)", pvState_closed:"ผู้เข้าร่วมไม่เห็นกิจกรรมนี้ (ปิดแล้ว)",
+  pvState_scheduled:"ผู้เข้าร่วมจะเห็นตั้งแต่ {d}", pvState_hidden:"เลยเวลาแสดงแล้ว ผู้เข้าร่วมไม่เห็น", pvState_live:"ผู้เข้าร่วมเห็นกิจกรรมนี้อยู่ตอนนี้",
+  search:"ค้นหา", searchPh:"ค้นหาชื่อ อีเมล IG หรือเบอร์โทร", csv:"ดาวน์โหลด CSV", regSub:"{n} คนลงทะเบียน · {d}",
+  pdpaNote:"รายชื่อนี้เป็นข้อมูลส่วนบุคคล (PDPA) ใช้เพื่อจัดกิจกรรมนี้เท่านั้น อย่าส่งต่อหรืออัปโหลดไปที่อื่น และลบไฟล์ CSV เมื่อใช้เสร็จ",
+  cFirst:"ชื่อ", cLast:"นามสกุล", cEmail:"อีเมล", cPhone:"โทร", cLine:"ชื่อ LINE", cAt:"เวลาที่สมัคร", cRef:"เลขอ้างอิง", cStatus:"สถานะ",
+  noRegs:"ยังไม่มีคนลงทะเบียน", st_Registered:"ลงทะเบียนแล้ว", st_Cancelled:"ยกเลิก",
+  errNet:"เชื่อมต่อไม่สำเร็จ ตรวจสอบอินเทอร์เน็ตแล้วลองอีกครั้ง", errConflict:"มีผู้ดูแลคนอื่นแก้ไขกิจกรรมนี้ระหว่างที่คุณเปิดอยู่ กรุณาโหลดใหม่", errRate:"ส่งคำขอบ่อยเกินไป รอสักครู่แล้วลองใหม่"
+ },
+ en:{
+  appName:"Event admin", signOut:"Sign out", langBtn:"ไทย", demo:"Demo mode: data lives in this page only. Not connected to the Google Sheet yet.",
+  signinTitle:"Admin sign-in", signinSub:"Use the Google account that has event admin access.", notAdmin:"This account is not an admin. Ask the owner for access.",
+  setupMissing:"GOOGLE_CLIENT_ID is not set in this page yet.", reauthTitle:"Please sign in again", reauthSub:"Your session expired. What you typed is still here.",
+  events:"Events", listSub:"{n} events · {r} registrations in total", newEvent:"+ New event",
+  fAll:"All", fLive:"Showing in LINE", fScheduled:"Scheduled", fDraft:"Drafts", fPast:"Ended/closed",
+  loading:"Loading…", emptyT:"No events yet", emptyD:"Select “New event” to start.", emptyFilter:"No events in this view.",
+  registered:"registered", edit:"Edit", registrants:"Registrants",
+  backToList:"← Back to events", newTitle:"New event", editTitle:"Edit event", lastEdit:"Last edited {at} by {by}",
+  secDetails:"Event details", secDetailsD:"Participants see this in LINE.",
+  fName:"Event name", fDate:"Event date", fStart:"Start time", fEnd:"End time", optional:"(optional)",
+  fLocation:"Location", fLocationPh:"e.g. Meeting room, 5th floor, Building A", fDesc:"More details", fDescPh:"Agenda, what to bring, dress code…",
+  fBudget:"Approved budget (THB)", fBudgetHint:"Used by the reimbursement form. Participants don't see it.",
+  secPoster:"Poster", secPosterD:"Portrait 4:5 works best. We resize it for you (JPG, PNG, WebP).",
+  noPoster:"No poster yet", choosePoster:"Choose image", replacePoster:"Replace image", removePoster:"Remove poster", posterHint:"You can also drag an image here.",
+  posterBig:"File is over {mb} MB after resizing", posterType:"Only JPG, PNG or WebP", posterBusy:"Resizing image…", posterLoading:"Loading poster…",
+  secSchedule:"Schedule (Thailand time)", secScheduleD:"Participants see the event only while it is “Showing in LINE” and can register only during “Registration”.",
+  fRegOpen:"Registration opens", fRegClose:"Registration closes", fPubFrom:"Show in LINE from", fPubUntil:"Hide from LINE after",
+  tlPub:"Showing in LINE", tlReg:"Registration", tlEvent:"Event day", tlNow:"Now",
+  wRegOutside:"Part of the registration period is outside the time the event shows in LINE. People can register only when both overlap.",
+  wRegAfterEvent:"Registration closes after the event starts.", wHideBeforeEvent:"The event will be hidden before it takes place.", wPast:"The event date has already passed.",
+  secStatus:"Status", secStatusD:"Choose whether this event is shown.",
+  stDraft:"Draft", stDraftD:"Not shown in LINE yet", stPub:"Published", stPubD:"Shown on schedule and open for expense claims", stClosed:"Closed", stClosedD:"Hidden in LINE, claims closed",
+  preview:"Preview in LINE", shareLink:"Link to share in LINE", copy:"Copy", copied:"Link copied",
+  ctaOpen:"Register", ctaUpcoming:"Opens {d}", ctaClosed:"Registration closed",
+  cancel:"Cancel", save:"Save", saving:"Saving…", saved:"Saved", unsaved:"You have unsaved changes", discard:"Discard unsaved changes?",
+  req:"Required", fixN:"Fix {n} fields to continue", timeOrder:"End time must be after start time", closeAfterOpen:"Must be after registration opens", untilAfterFrom:"Must be after “Show from”", budgetBad:"Enter 0 or more",
+  sDraft:"Draft", sClosed:"Closed", sScheduled:"Shows from {d}", sHidden:"No longer shown", sNoWindow:"No schedule set",
+  sRegOpen:"Registration open", sRegUpcoming:"Showing · registration not open yet", sRegClosed:"Showing · registration closed",
+  pvState_draft:"Participants can't see this event yet (draft).", pvState_closed:"Participants can't see this event (closed).",
+  pvState_scheduled:"Participants will see it from {d}.", pvState_hidden:"The showing period has ended. Participants can't see it.", pvState_live:"Participants can see this event now.",
+  search:"Search", searchPh:"Search name, email, IG or phone", csv:"Download CSV", regSub:"{n} registered · {d}",
+  pdpaNote:"This list is personal data (PDPA). Use it only to run this event, don't forward or upload it elsewhere, and delete the CSV when you're done.",
+  cFirst:"First name", cLast:"Last name", cEmail:"Email", cPhone:"Phone", cLine:"LINE name", cAt:"Registered at", cRef:"Reference", cStatus:"Status",
+  noRegs:"No registrations yet", st_Registered:"Registered", st_Cancelled:"Cancelled",
+  errNet:"Couldn't connect. Check your internet and try again.", errConflict:"Another admin changed this event while you had it open. Please reload.", errRate:"Too many requests. Wait a moment and try again."
+ }
+};
+
+/* =====================================================================
+   Helpers
+   ===================================================================== */
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+const store = { get(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } }, set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} } };
+let lang = store.get("admin.lang") || CONFIG.DEFAULT_LANG;
+const t = (k, v) => { let s = (T[lang] && T[lang][k]) ?? T.en[k] ?? k; if (v) for (const [a,b] of Object.entries(v)) s = s.split("{"+a+"}").join(b); return s; };
+function h(tag, attrs, ...kids){                          // safe DOM builder: text is never parsed as HTML
+  const el = document.createElement(tag);
+  for (const [k,v] of Object.entries(attrs || {})){
+    if (v == null || v === false) continue;
+    if (k === "class") el.className = v; else if (k === "text") el.textContent = v;
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v); else el.setAttribute(k, v === true ? "" : v);
+  }
+  kids.flat().forEach(c => { if (c != null && c !== false) el.append(c instanceof Node ? c : document.createTextNode(String(c))); });
+  return el;
+}
+const pad = n => String(n).padStart(2, "0");
+function bkkNow(){                                         // "yyyy-MM-dd HH:mm" in Thailand time
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Bangkok",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date()).map(x => [x.type, x.value]));
+  return `${p.year}-${p.month}-${p.day} ${p.hour}:${p.minute}`;
+}
+const toInput = s => s ? s.replace(" ", "T") : "";
+const fromInput = s => s ? s.replace("T", " ").slice(0,16) : "";
+const addDays = (d, n) => { const x = new Date(d+"T00:00:00Z"); x.setUTCDate(x.getUTCDate()+n); return x.toISOString().slice(0,10); };
+const loc = () => lang === "th" ? "th-TH" : "en-GB";
+function fmtDate(d, opts){ if (!d) return ""; const x = new Date(d.slice(0,10)+"T00:00:00Z");
+  return new Intl.DateTimeFormat(loc(), Object.assign({day:"numeric",month:"short",year:"numeric",timeZone:"UTC"}, opts||{})).format(x); }
+function fmtDT(s){ if (!s) return ""; return fmtDate(s) + " " + s.slice(11,16); }
+function fmtWhen(ev){ const d = fmtDate(ev.date, {weekday:"short"}); return ev.startTime ? `${d} · ${ev.startTime}${ev.endTime ? "–"+ev.endTime : ""}` : d; }
+function fmtUpdated(iso){ return iso ? fmtDate(iso.slice(0,10)) + " " + iso.slice(11,16) : ""; }
+let toastT;
+function toast(msg, kind){ const el = $("#toast"); el.textContent = msg; el.className = "toast " + (kind || "bad"); el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => el.hidden = true, 4500); }
+
+function applyLang(){
+  document.documentElement.lang = lang;
+  $$("[data-i18n]").forEach(el => el.textContent = t(el.dataset.i18n));
+  $$("[data-i18n-ph]").forEach(el => el.placeholder = t(el.dataset.i18nPh));
+  $("#langBtn").textContent = t("langBtn");
+  if (!$("#vList").hidden) renderList();
+  if (!$("#vEdit").hidden) { renderEditorHead(); refreshPreview(); }
+  if (!$("#vRegs").hidden) renderRegs();
+}
+function show(view){
+  ["vSignin","vList","vEdit","vRegs"].forEach(id => $("#"+id).hidden = id !== view);
+  window.scrollTo(0,0);
+}
+
+/* =====================================================================
+   Status rules (same as the server)
+   ===================================================================== */
+function evState(ev, now){
+  if (ev.status === "Draft") return {key:"draft", label:t("sDraft"), cls:""};
+  if (ev.status === "Closed") return {key:"past", label:t("sClosed"), cls:""};
+  if (!ev.publishFrom || !ev.publishUntil) return {key:"draft", label:t("sNoWindow"), cls:"warn"};
+  if (now < ev.publishFrom) return {key:"scheduled", label:t("sScheduled",{d:fmtDT(ev.publishFrom)}), cls:"info"};
+  if (now >= ev.publishUntil) return {key:"past", label:t("sHidden"), cls:""};
+  const r = regState(ev, now);
+  if (r === "open") return {key:"live", label:t("sRegOpen"), cls:"ok", reg:r};
+  return {key:"live", label:t(r === "upcoming" ? "sRegUpcoming" : "sRegClosed"), cls:"warn", reg:r};
+}
+function regState(ev, now){
+  if (!ev.regOpen || now < ev.regOpen) return "upcoming";
+  if (!ev.regClose || now >= ev.regClose) return "closed";
+  return "open";
+}
+
+/* =====================================================================
+   Google sign-in + API
+   ===================================================================== */
+const demo = !CONFIG.API_URL;
+const auth = { token:null, exp:0, email:"" };
+let reauthWaiters = [];
+function decodeJwt(tok){ try{ const p = tok.split(".")[1].replace(/-/g,"+").replace(/_/g,"/"); return JSON.parse(decodeURIComponent(escape(atob(p)))); }catch(e){ return {}; } }
+
+function initGoogle(){
+  if (!CONFIG.GOOGLE_CLIENT_ID){ showSigninError(t("setupMissing")); return; }
+  if (!window.google || !google.accounts || !google.accounts.id){ setTimeout(initGoogle, 200); return; }
+  google.accounts.id.initialize({ client_id:CONFIG.GOOGLE_CLIENT_ID, callback:onCredential, auto_select:true, cancel_on_tap_outside:false, use_fedcm_for_prompt:true });
+  google.accounts.id.renderButton($("#gsiBtn"), {theme:"outline", size:"large", shape:"pill", text:"signin_with", locale:lang});
+  google.accounts.id.renderButton($("#gsiBtn2"), {theme:"outline", size:"large", shape:"pill", text:"signin_with", locale:lang});
+  google.accounts.id.prompt();
+}
+async function onCredential(resp){
+  const p = decodeJwt(resp.credential);
+  auth.token = resp.credential; auth.exp = (p.exp || 0) * 1000; auth.email = p.email || "";
+  $("#reauth").hidden = true;
+  if (reauthWaiters.length){ const w = reauthWaiters; reauthWaiters = []; w.forEach(f => f()); return; }
+  try{
+    const me = await api("admin.me");
+    auth.email = me.email; signedIn();
+  }catch(e){ auth.token = null; showSigninError(e.code === "FORBIDDEN" ? t("notAdmin") + " (" + (p.email||"") + ")" : e.message); }
+}
+function showSigninError(msg){ show("vSignin"); const el = $("#signinErr"); el.textContent = msg; el.hidden = false; }
+function reauth(){
+  return new Promise(res => {
+    reauthWaiters.push(res);
+    $("#reauth").hidden = false;
+    try{ google.accounts.id.prompt(); }catch(e){}
+  });
+}
+function signedIn(){
+  $("#who").textContent = auth.email; $("#signOutBtn").hidden = false; $("#signinErr").hidden = true;
+  loadList();
+}
+function signOut(){
+  try{ google.accounts.id.disableAutoSelect(); }catch(e){}
+  auth.token = null; auth.email = ""; $("#who").textContent = ""; $("#signOutBtn").hidden = true;
+  show("vSignin");
+}
+
+class ApiError extends Error { constructor(msg, code){ super(msg); this.code = code; } }
+async function api(action, data, retried){
+  if (demo) return demoApi(action, data || {});
+  if (!auth.token || Date.now() > auth.exp - 60000) await reauth();
+  let res;
+  try{
+    const r = await fetch(CONFIG.API_URL, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body: JSON.stringify(Object.assign({}, data, {action, idToken:auth.token})) });
+    res = await r.json();
+  }catch(e){ throw new ApiError(t("errNet"), "NET"); }
+  if (res.ok) return res;
+  if (res.code === "AUTH" && !retried){ auth.token = null; await reauth(); return api(action, data, true); }
+  const msg = res.code === "CONFLICT" ? t("errConflict") : res.code === "RATE" ? t("errRate") : res.error;
+  throw new ApiError(msg, res.code);
+}
+
+/* =====================================================================
+   Event list
+   ===================================================================== */
+let events = [], filter = "all";
+async function loadList(){
+  show("vList");
+  $("#rows").replaceChildren(h("div",{class:"loading",text:t("loading")}));
+  try{ const r = await api("admin.listEvents"); events = r.events; renderList(); }
+  catch(e){ $("#rows").replaceChildren(h("div",{class:"empty"}, h("h2",{text:e.message}))); }
+}
+function renderList(){
+  const now = bkkNow();
+  const total = events.reduce((s,e) => s + (e.registered||0), 0);
+  $("#listSub").textContent = t("listSub", {n:events.length, r:total});
+  $$("#filters .chip").forEach(c => c.setAttribute("aria-pressed", String(c.dataset.filter === filter)));
+  const list = events.filter(ev => filter === "all" || evState(ev, now).key === filter);
+  if (!events.length){ $("#rows").replaceChildren(h("div",{class:"empty"}, h("h2",{text:t("emptyT")}), h("p",{text:t("emptyD")}))); return; }
+  if (!list.length){ $("#rows").replaceChildren(h("div",{class:"empty"}, h("p",{text:t("emptyFilter")}))); return; }
+  $("#rows").replaceChildren(...list.map(ev => {
+    const st = evState(ev, now);
+    const day = ev.date ? String(Number(ev.date.slice(8,10))) : "–";
+    const mon = ev.date ? fmtDate(ev.date, {day:undefined, year:undefined, month:"short"}) : "";
+    const regLine = ev.regOpen ? `${t("tlReg")}: ${fmtDT(ev.regOpen)} – ${fmtDT(ev.regClose)}` : "";
+    return h("article",{class:"erow"},
+      h("div",{class:"dateblk","aria-hidden":"true"}, h("b",{text:day}), h("span",{text:mon})),
+      h("div",{},
+        h("h2",{class:"ename",text:ev.name}),
+        h("p",{class:"emeta",text:fmtWhen(ev) + (ev.location ? " · " + ev.location : "")}),
+        regLine && h("p",{class:"emeta",text:regLine}),
+        h("div",{class:"etags"}, h("span",{class:"tag "+st.cls,text:st.label}), h("span",{class:"tag plain",text:ev.id}))),
+      h("div",{class:"ract"},
+        h("div",{class:"count"}, h("b",{text:String(ev.registered||0)}), h("span",{text:t("registered")})),
+        h("div",{class:"rbtns"},
+          h("button",{class:"btn sec sm",type:"button",text:t("edit"),onclick:() => openEditor(ev)}),
+          h("button",{class:"btn ghost sm",type:"button",text:t("registrants"),onclick:() => openRegs(ev)}))));
+  }));
+}
+
+/* =====================================================================
+   Editor
+   ===================================================================== */
+let cur = null;          // event being edited (null = new)
+let poster = { file:null, url:null, remove:false, hadPoster:false, name:"" };
+let dirty = false, touched = {}, saving = false;
+const F = id => $("#"+id);
+
+function openEditor(ev){
+  cur = ev || null; dirty = false; touched = {};
+  if (poster.url && poster.url.startsWith("blob:")) URL.revokeObjectURL(poster.url);
+  poster = { file:null, url:null, remove:false, hadPoster:!!(ev && ev.hasPoster), name:"" };
+  $$("#evForm [data-f]").forEach(f => setErr(f, null)); $("#pErr").hidden = true;
+  const now = bkkNow();
+  if (ev){
+    F("fName").value = ev.name; F("fDate").value = ev.date; F("fStart").value = ev.startTime || ""; F("fEnd").value = ev.endTime || "";
+    F("fLocation").value = ev.location || ""; F("fDesc").value = ev.description || ""; F("fBudget").value = ev.budget === "" || ev.budget == null ? "" : Number(ev.budget).toFixed(2);
+    F("fRegOpen").value = toInput(ev.regOpen); F("fRegClose").value = toInput(ev.regClose);
+    F("fPubFrom").value = toInput(ev.publishFrom); F("fPubUntil").value = toInput(ev.publishUntil);
+    if (!ev.regOpen) fillDefaults(true);
+    $$("input[name=status]").forEach(r => r.checked = r.value === (ev.status || "Draft"));
+    touched = {regOpen:!!ev.regOpen, regClose:!!ev.regClose, pubFrom:!!ev.publishFrom, pubUntil:!!ev.publishUntil};
+  } else {
+    $("#evForm").reset();
+    F("fDate").value = addDays(now.slice(0,10), 14); F("fStart").value = "18:00"; F("fEnd").value = "21:00";
+    $$("input[name=status]").forEach(r => r.checked = r.value === "Draft");
+    fillDefaults(true);
+  }
+  show("vEdit"); renderEditorHead(); renderPoster(); refreshPreview(); updateSaveMsg();
+  if (ev && ev.hasPoster) loadPoster(ev);
+  F("fName").focus();
+}
+// Sensible defaults that follow the event date until the admin changes them
+function fillDefaults(all){
+  const now = bkkNow(), d = F("fDate").value; if (!d) return;
+  const start = F("fStart").value || "09:00";
+  const nowRounded = now.slice(0,14) + "00";
+  if (all || !touched.regOpen) F("fRegOpen").value = toInput(nowRounded);
+  if (all || !touched.regClose) F("fRegClose").value = toInput(`${addDays(d,-1)} 23:59`);
+  if (all || !touched.pubFrom) F("fPubFrom").value = toInput(nowRounded);
+  if (all || !touched.pubUntil) F("fPubUntil").value = toInput(`${d} 23:59`);
+  if (start && (all || !touched.regClose) && addDays(d,-1) + " 23:59" < nowRounded) F("fRegClose").value = toInput(`${d} ${start}`);
+}
+function renderEditorHead(){
+  $("#editTitle").textContent = cur ? t("editTitle") : t("newTitle");
+  $("#editSub").textContent = cur ? `${cur.id}` + (cur.updatedAt ? " · " + t("lastEdit", {at:fmtUpdated(cur.updatedAt), by:cur.updatedBy||"-"}) : "") : "";
+}
+function readForm(){
+  return {
+    id: cur ? cur.id : "", name: F("fName").value.trim(), date: F("fDate").value,
+    startTime: F("fStart").value, endTime: F("fEnd").value, location: F("fLocation").value.trim(),
+    description: F("fDesc").value.trim(), budget: F("fBudget").value.replace(/,/g,"").trim(),
+    regOpen: fromInput(F("fRegOpen").value), regClose: fromInput(F("fRegClose").value),
+    publishFrom: fromInput(F("fPubFrom").value), publishUntil: fromInput(F("fPubUntil").value),
+    status: ($("input[name=status]:checked") || {}).value || "Draft"
+  };
+}
+function setErr(field, msg){
+  const e = $(".err", field), i = $("input,textarea,select", field);
+  if (!e) return;
+  if (msg){ e.textContent = msg; e.hidden = false; i && i.setAttribute("aria-invalid","true"); }
+  else { e.hidden = true; i && i.removeAttribute("aria-invalid"); }
+}
+function validateForm(v){
+  const errs = [], chk = (f, msg) => { const el = $(`[data-f="${f}"]`); setErr(el, msg); if (msg) errs.push(el); };
+  chk("name", v.name.length >= 2 ? null : t("req"));
+  chk("date", v.date ? null : t("req"));
+  chk("start", null);
+  chk("end", v.startTime && v.endTime && v.endTime <= v.startTime ? t("timeOrder") : null);
+  chk("location", v.location.length >= 2 ? null : t("req"));
+  chk("budget", v.budget === "" || (isFinite(Number(v.budget)) && Number(v.budget) >= 0) ? null : t("budgetBad"));
+  chk("regOpen", v.regOpen ? null : t("req"));
+  chk("regClose", !v.regClose ? t("req") : (v.regOpen && v.regClose <= v.regOpen ? t("closeAfterOpen") : null));
+  chk("pubFrom", v.publishFrom ? null : t("req"));
+  chk("pubUntil", !v.publishUntil ? t("req") : (v.publishFrom && v.publishUntil <= v.publishFrom ? t("untilAfterFrom") : null));
+  return errs;
+}
+function warnings(v){
+  const w = [], evStart = v.date ? `${v.date} ${v.startTime || "00:00"}` : "";
+  if (v.regOpen && v.regClose && v.publishFrom && v.publishUntil && (v.regOpen < v.publishFrom || v.regClose > v.publishUntil)) w.push(t("wRegOutside"));
+  if (evStart && v.regClose && v.regClose > evStart && v.startTime) w.push(t("wRegAfterEvent"));
+  if (v.date && v.publishUntil && v.publishUntil < evStart) w.push(t("wHideBeforeEvent"));
+  if (v.date && v.date < bkkNow().slice(0,10) && !cur) w.push(t("wPast"));
+  return w;
+}
+function renderTimeline(v){
+  const now = bkkNow();
+  const pts = [v.regOpen, v.regClose, v.publishFrom, v.publishUntil, v.date ? v.date+" 00:00" : "", now].filter(Boolean).map(s => Date.parse(s.replace(" ","T")+":00Z"));
+  if (pts.length < 3){ $("#timeline").replaceChildren(); return; }
+  let min = Math.min(...pts), max = Math.max(...pts); const span = Math.max(max - min, 3600e3); min -= span*0.04; max += span*0.04;
+  const x = s => ((Date.parse(s.replace(" ","T")+":00Z") - min) / (max - min) * 100).toFixed(2) + "%";
+  const bar = (a, b, cls) => a && b && b > a ? h("div",{class:"tl-bar "+cls, style:`left:${x(a)};width:calc(${x(b)} - ${x(a)})`}) : null;
+  const marks = () => [v.date && h("div",{class:"tl-mark",style:`left:${x(v.date+" "+(v.startTime||"12:00"))}`}), h("div",{class:"tl-mark now",style:`left:${x(now)}`})];
+  $("#timeline").replaceChildren(
+    h("div",{class:"tl-row"}, h("span",{text:t("tlPub")}), h("div",{class:"tl-track"}, bar(v.publishFrom, v.publishUntil, "pub"), marks())),
+    h("div",{class:"tl-row"}, h("span",{text:t("tlReg")}), h("div",{class:"tl-track"}, bar(v.regOpen, v.regClose, "reg"), marks())),
+    h("div",{class:"tl-legend"},
+      h("span",{}, h("i",{style:"background:var(--accent)"}), t("tlPub")), h("span",{}, h("i",{style:"background:var(--ok)"}), t("tlReg")),
+      h("span",{}, h("i",{style:"background:var(--ink);width:3px"}), t("tlEvent")), h("span",{}, h("i",{style:"background:var(--err);width:3px"}), t("tlNow"))));
+}
+function refreshPreview(){
+  const v = readForm(), now = bkkNow();
+  renderTimeline(v);
+  $("#warns").replaceChildren(...warnings(v).map(s => h("li",{text:s})));
+  $("#pvName").textContent = v.name || t("fName");
+  $("#pvWhen").textContent = v.date ? fmtWhen(v) : "";
+  $("#pvLoc").textContent = v.location ? "📍 " + v.location : "";
+  const r = regState(v, now), cta = $("#pvCta");
+  cta.disabled = r !== "open";
+  cta.textContent = r === "open" ? t("ctaOpen") : r === "upcoming" ? t("ctaUpcoming", {d:fmtDT(v.regOpen)}) : t("ctaClosed");
+  const img = $("#pvPoster");
+  if (poster.url && !poster.remove){ img.src = poster.url; } else img.removeAttribute("src");
+  const st = evState(v, now);
+  let key = v.status === "Draft" ? "pvState_draft" : v.status === "Closed" ? "pvState_closed" : st.key === "scheduled" ? "pvState_scheduled" : st.key === "past" ? "pvState_hidden" : "pvState_live";
+  $("#pvState").textContent = t(key, {d:fmtDT(v.publishFrom)});
+  $("#pvTags").replaceChildren(h("span",{class:"tag "+st.cls,text:st.label}));
+  const share = cur && CONFIG.REGISTER_LIFF_URL;
+  $("#shareBox").hidden = !share;
+  if (share) $("#shareUrl").value = CONFIG.REGISTER_LIFF_URL.replace(/\/$/,"") + "?event=" + encodeURIComponent(cur.id);
+}
+function updateSaveMsg(){ $("#saveMsg").textContent = dirty ? t("unsaved") : ""; }
+
+/* ---- poster ---- */
+function renderPoster(){
+  const has = poster.url && !poster.remove;
+  $("#pThumb").hidden = !has; $("#pNone").hidden = has;
+  if (has) $("#pThumb").src = poster.url;
+  $("#pName").textContent = poster.file ? poster.name : (has ? "" : "");
+  $("#pHint").textContent = poster.file ? (poster.file.size/1048576).toFixed(2) + " MB" : t("posterHint");
+  $("#pPick").textContent = has ? t("replacePoster") : t("choosePoster");
+  $("#pRemove").hidden = !has;
+}
+async function loadPoster(ev){
+  $("#pHint").textContent = t("posterLoading");
+  try{
+    const r = await api("admin.getPoster", {eventId:ev.id});
+    if (cur !== ev || poster.file || !r.poster) { renderPoster(); return; }
+    poster.url = `data:${r.poster.type};base64,${r.poster.data}`;
+    renderPoster(); refreshPreview();
+  }catch(e){ renderPoster(); }
+}
+async function compressImage(file){
+  const bmp = await createImageBitmap(file, {imageOrientation:"from-image"});
+  const scale = Math.min(1, CONFIG.POSTER_MAX_PX / Math.max(bmp.width, bmp.height));
+  const c = document.createElement("canvas"); c.width = Math.round(bmp.width*scale); c.height = Math.round(bmp.height*scale);
+  const ctx = c.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0,0,c.width,c.height); ctx.drawImage(bmp,0,0,c.width,c.height);
+  const blob = await new Promise(r => c.toBlob(r, "image/jpeg", 0.85));
+  if (!blob) throw new Error("encode");
+  return new File([blob], (file.name||"poster").replace(/\.[^.]+$/,"") + ".jpg", {type:"image/jpeg"});
+}
+async function setPosterFile(file){
+  $("#pErr").hidden = true;
+  if (!/^image\/(jpeg|png|webp)$/.test(file.type)){ $("#pErr").textContent = t("posterType"); $("#pErr").hidden = false; return; }
+  $("#pHint").textContent = t("posterBusy");
+  let out;
+  try{ out = await compressImage(file); }catch(e){ out = file; }
+  if (out.size > CONFIG.MAX_POSTER_MB*1048576){ $("#pErr").textContent = t("posterBig",{mb:CONFIG.MAX_POSTER_MB}); $("#pErr").hidden = false; renderPoster(); return; }
+  if (poster.url && poster.url.startsWith("blob:")) URL.revokeObjectURL(poster.url);
+  poster.file = out; poster.name = out.name; poster.url = URL.createObjectURL(out); poster.remove = false;
+  markDirty(); renderPoster(); refreshPreview();
+}
+const fileToBase64 = f => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1]); r.onerror = () => rej(r.error); r.readAsDataURL(f); });
+
+/* ---- save ---- */
+function markDirty(){ dirty = true; updateSaveMsg(); }
+async function save(){
+  if (saving) return;
+  const v = readForm(), errs = validateForm(v);
+  if (errs.length){ toast(t("fixN",{n:errs.length})); errs[0].scrollIntoView({behavior:"smooth",block:"center"}); return; }
+  saving = true; $("#saveBtn").disabled = true; $("#saveBtn").textContent = t("saving");
+  try{
+    const body = { event:v, expectedUpdatedAt: cur ? (cur.updatedAt || "") : "" };
+    if (poster.file) body.poster = { type:poster.file.type, data: await fileToBase64(poster.file) };
+    else if (poster.remove && poster.hadPoster) body.removePoster = true;
+    const r = await api("admin.saveEvent", body);
+    const i = events.findIndex(e => e.id === r.event.id);
+    const merged = Object.assign({registered: i >= 0 ? events[i].registered : 0}, r.event);
+    if (i >= 0) events[i] = merged; else events.unshift(merged);
+    dirty = false; toast(t("saved"), "good"); show("vList"); renderList();
+  }catch(e){ toast(e.message); }
+  finally{ saving = false; $("#saveBtn").disabled = false; $("#saveBtn").textContent = t("save"); }
+}
+function back(){
+  if (!$("#vEdit").hidden && dirty && !window.confirm(t("discard"))) return;
+  dirty = false; show("vList"); renderList();
+}
+
+/* =====================================================================
+   Registrants
+   ===================================================================== */
+let regEvent = null, regs = [];
+async function openRegs(ev){
+  regEvent = ev; regs = []; $("#regSearch").value = "";
+  show("vRegs"); renderRegs();
+  $("#regBody").replaceChildren(h("tr",{}, h("td",{colspan:"10",class:"num",text:t("loading")})));
+  try{ const r = await api("admin.registrants", {eventId:ev.id, purpose:"view"}); regs = r.registrants; renderRegs(); }
+  catch(e){ $("#regBody").replaceChildren(h("tr",{}, h("td",{colspan:"10",text:e.message}))); }
+}
+function renderRegs(){
+  if (!regEvent) return;
+  const active = regs.filter(r => r.status === "Registered").length;
+  $("#regTitle").textContent = regEvent.name;
+  $("#regSub").textContent = t("regSub", {n:active, d:fmtWhen(regEvent)});
+  const q = $("#regSearch").value.trim().toLowerCase();
+  const list = regs.filter(r => !q || [r.firstName,r.lastName,r.email,r.instagram,r.phone,r.lineName,r.reference].join(" ").toLowerCase().includes(q));
+  if (!regs.length && regEvent){ $("#regBody").replaceChildren(h("tr",{}, h("td",{colspan:"10",class:"num",text:t("noRegs")}))); }
+  else $("#regBody").replaceChildren(...list.map((r,i) => h("tr",{},
+    h("td",{class:"num",text:String(i+1)}), h("td",{text:r.firstName}), h("td",{text:r.lastName}), h("td",{text:r.email}),
+    h("td",{text:r.instagram ? "@"+r.instagram : "–"}), h("td",{text:r.phone}), h("td",{text:r.lineName}),
+    h("td",{class:"num",text:fmtDT(r.registeredAt)}), h("td",{class:"num",text:r.reference}),
+    h("td",{}, h("span",{class:"tag "+(r.status === "Registered" ? "ok" : ""),text:t("st_"+r.status)})))));
+  $("#csvBtn").disabled = !regs.length;
+}
+async function downloadCsv(){
+  let rows = regs;
+  try{ const r = await api("admin.registrants", {eventId:regEvent.id, purpose:"csv"}); rows = r.registrants; }catch(e){ toast(e.message); return; }
+  const cell = v => { let s = String(v ?? ""); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; return '"' + s.replace(/"/g,'""') + '"'; };
+  const head = ["reference","status","registered_at","first_name","last_name","email","instagram","phone","line_name"];
+  const lines = [head.join(",")].concat(rows.map(r => [r.reference,r.status,r.registeredAt,r.firstName,r.lastName,r.email,r.instagram,r.phone,r.lineName].map(cell).join(",")));
+  const blob = new Blob(["﻿" + lines.join("\r\n")], {type:"text/csv;charset=utf-8"});
+  const a = h("a",{href:URL.createObjectURL(blob), download:`registrants-${regEvent.id}.csv`});
+  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+/* =====================================================================
+   Demo mode (no API_URL): sample data in memory only
+   ===================================================================== */
+function demoPoster(title, c1, c2){
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs><rect width="800" height="1000" fill="url(#g)"/><circle cx="640" cy="220" r="160" fill="#fff" opacity=".12"/><circle cx="140" cy="820" r="220" fill="#fff" opacity=".08"/><text x="60" y="700" font-family="sans-serif" font-size="78" font-weight="700" fill="#fff">${title}</text><text x="60" y="770" font-family="sans-serif" font-size="34" fill="#fff" opacity=".85">Community Event</text></svg>`;
+  return { type:"image/svg+xml", data: btoa(unescape(encodeURIComponent(svg))) };
+}
+const DEMO = (() => {
+  const now = bkkNow(), d0 = now.slice(0,10);
+  const mk = (o) => Object.assign({description:"", budget:"", hasPoster:false, updatedAt:"2026-11-01T10:00:00.000", updatedBy:"demo@example.com", registered:0}, o);
+  return {
+    events:[
+      mk({id:"EV-2611-02", name:"Community Meetup – November", date:addDays(d0,15), startTime:"18:30", endTime:"21:00", location:"Co-working space, Ari", status:"Approved", budget:5000,
+          regOpen:addDays(d0,-3)+" 09:00", regClose:addDays(d0,13)+" 23:59", publishFrom:addDays(d0,-5)+" 09:00", publishUntil:addDays(d0,15)+" 23:59", hasPoster:true, registered:3}),
+      mk({id:"EV-2612-01", name:"Year-end Gathering", date:addDays(d0,43), startTime:"17:00", endTime:"22:00", location:"Rooftop, Sukhumvit 24", status:"Approved", budget:12000,
+          regOpen:addDays(d0,10)+" 09:00", regClose:addDays(d0,40)+" 23:59", publishFrom:addDays(d0,7)+" 09:00", publishUntil:addDays(d0,43)+" 23:59", hasPoster:true}),
+      mk({id:"EV-2701-01", name:"Workshop: Storytelling", date:addDays(d0,70), startTime:"13:00", endTime:"16:00", location:"TBC", status:"Draft",
+          regOpen:addDays(d0,40)+" 09:00", regClose:addDays(d0,68)+" 23:59", publishFrom:addDays(d0,38)+" 09:00", publishUntil:addDays(d0,70)+" 23:59"}),
+      mk({id:"EV-2610-01", name:"October Board-game Night", date:addDays(d0,-20), startTime:"19:00", endTime:"22:00", location:"Cafe, Phrom Phong", status:"Approved",
+          regOpen:addDays(d0,-40)+" 09:00", regClose:addDays(d0,-21)+" 23:59", publishFrom:addDays(d0,-42)+" 09:00", publishUntil:addDays(d0,-20)+" 23:59", registered:24})
+    ],
+    posters:{ "EV-2611-02": demoPoster("Meetup", "#2447D6", "#0E1726"), "EV-2612-01": demoPoster("Year-end", "#0F7A55", "#0E1726") },
+    regs:[
+      {reference:"RG-2611-0001", status:"Registered", registeredAt:addDays(d0,-2)+" 10:12", firstName:"สมชาย", lastName:"ตัวอย่าง", email:"somchai@example.com", instagram:"somchai.demo", phone:"0800000001", lineName:"Somchai"},
+      {reference:"RG-2611-0002", status:"Registered", registeredAt:addDays(d0,-2)+" 12:40", firstName:"Jane", lastName:"Example", email:"jane@example.com", instagram:"", phone:"0800000002", lineName:"Jane E."},
+      {reference:"RG-2611-0003", status:"Registered", registeredAt:addDays(d0,-1)+" 08:05", firstName:"มานี", lastName:"ทดสอบ", email:"manee@example.com", instagram:"manee_t", phone:"0800000003", lineName:"มานี"}
+    ]
+  };
+})();
+async function demoApi(action, data){
+  await new Promise(r => setTimeout(r, 250));
+  if (action === "admin.me") return {ok:true, email:"demo@example.com"};
+  if (action === "admin.listEvents") return {ok:true, events: JSON.parse(JSON.stringify(DEMO.events))};
+  if (action === "admin.getPoster") return {ok:true, poster: DEMO.posters[data.eventId] || null};
+  if (action === "admin.registrants") return {ok:true, registrants: data.eventId === "EV-2611-02" ? DEMO.regs : []};
+  if (action === "admin.saveEvent"){
+    const v = data.event; let ev = DEMO.events.find(e => e.id === v.id);
+    if (!ev){ ev = {id:"EV-"+v.date.slice(2,4)+v.date.slice(5,7)+"-0"+(DEMO.events.length+1), registered:0}; DEMO.events.unshift(ev); }
+    Object.assign(ev, v, {id:ev.id, budget: v.budget === "" ? "" : Number(v.budget), updatedAt:new Date().toISOString(), updatedBy:"demo@example.com"});
+    if (data.poster){ DEMO.posters[ev.id] = data.poster; ev.hasPoster = true; } else if (data.removePoster){ delete DEMO.posters[ev.id]; ev.hasPoster = false; }
+    return {ok:true, event: JSON.parse(JSON.stringify(ev))};
+  }
+  throw new ApiError("Unknown", "VALIDATION");
+}
+
+/* =====================================================================
+   Wire up
+   ===================================================================== */
+$("#langBtn").addEventListener("click", () => { lang = lang === "th" ? "en" : "th"; store.set("admin.lang", lang); applyLang(); });
+$("#signOutBtn").addEventListener("click", signOut);
+$("#newBtn").addEventListener("click", () => openEditor(null));
+$("#filters").addEventListener("click", e => { const b = e.target.closest("[data-filter]"); if (!b) return; filter = b.dataset.filter; renderList(); });
+document.addEventListener("click", e => { if (e.target.closest('[data-act="back"]')) back(); });
+$("#saveBtn").addEventListener("click", save);
+$("#evForm").addEventListener("submit", e => { e.preventDefault(); save(); });
+$("#evForm").addEventListener("input", e => {
+  markDirty();
+  const map = {fRegOpen:"regOpen", fRegClose:"regClose", fPubFrom:"pubFrom", fPubUntil:"pubUntil"};
+  if (map[e.target.id]) touched[map[e.target.id]] = true;
+  if (e.target.id === "fDate" || e.target.id === "fStart") fillDefaults(false);
+  const f = e.target.closest("[data-f]"); if (f) setErr(f, null);
+  refreshPreview();
+});
+$("#evForm").addEventListener("change", refreshPreview);
+$("#pPick").addEventListener("click", () => $("#pFile").click());
+$("#pFile").addEventListener("change", e => { const f = e.target.files[0]; e.target.value = ""; if (f) setPosterFile(f); });
+$("#pRemove").addEventListener("click", () => { poster.remove = true; poster.file = null; markDirty(); renderPoster(); refreshPreview(); });
+const drop = $("#drop");
+["dragenter","dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave","drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if (f) setPosterFile(f); });
+$("#copyBtn").addEventListener("click", async () => { try{ await navigator.clipboard.writeText($("#shareUrl").value); toast(t("copied"), "good"); }catch(e){ $("#shareUrl").select(); } });
+$("#regSearch").addEventListener("input", renderRegs);
+$("#csvBtn").addEventListener("click", downloadCsv);
+window.addEventListener("beforeunload", e => { if (dirty && !$("#vEdit").hidden){ e.preventDefault(); e.returnValue = ""; } });
+
+applyLang();
+if (demo){
+  $("#demoBanner").hidden = false; auth.email = "demo@example.com"; signedIn();
+} else {
+  show("vSignin");
+  const s = document.createElement("script"); s.src = "https://accounts.google.com/gsi/client"; s.async = true; s.onload = initGoogle;
+  s.onerror = () => showSigninError(t("errNet")); document.head.append(s);
+}
+</script>
+</body>
+</html>
